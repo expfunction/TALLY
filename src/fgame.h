@@ -11,13 +11,23 @@ typedef enum
     STATE_HELP
 } GameState;
 
+typedef enum
+{
+    LEVEL_HUB = 0,
+    LEVEL_MISSION1 = 1,
+    LEVEL_MISSION2 = 2,
+    LEVEL_MISSION3 = 3
+} LevelID;
+
 extern GameState g_state;
+extern LevelID g_current_level;
 extern int g_loyalty;
 extern int g_doubt;
 extern int g_ammo;
 extern int g_health;
 
 void game_init(void);
+void game_load_level(LevelID level);
 void game_update(void);
 
 #endif

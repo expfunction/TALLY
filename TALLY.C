@@ -102,6 +102,8 @@ int main(int argc, char **argv)
     cv_io_keyboard_init();
     cv_io_mouse_init(SCREEN_W, SCREEN_H, CV_MOUSE_MODE_MOUSELOOK);
 
+    flevel_init();
+
     while (!loopdone)
     {
 
@@ -109,10 +111,13 @@ int main(int argc, char **argv)
 
         cv_io_keyboard_poll();
         cv_io_mouse_poll();
-
-        player_update(&cam);
-        flevel_update();
-        fentity_update();
+        console_log("updater");
+        game_update();
+        if (g_state == STATE_PLAYING) {
+            player_update(&cam);
+            flevel_update();
+            fentity_update();
+        }
         ui_update();
         audio_update();
 
@@ -126,8 +131,10 @@ int main(int argc, char **argv)
         vga_clear_page(0, 0, SCREEN_SIZE);
         vga_clear_depth();
 
-        flevel_draw(&cam, &surf, &screen_rect);
-        fentity_draw(&cam, &surf, &screen_rect);
+        if (g_state == STATE_PLAYING) {
+            flevel_draw(&cam, &surf, &screen_rect);
+            fentity_draw(&cam, &surf, &screen_rect);
+        }
         ui_draw();
 
         vga_flip(surf.back);
