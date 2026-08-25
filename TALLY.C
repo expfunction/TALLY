@@ -115,7 +115,7 @@ int main(int argc, char **argv)
         fgame_update();
         if (g_state == STATE_PLAYING)
         {
-            player_update(&cam);
+            fplayer_update(&cam);
             flevel_update();
             fentity_update();
         }

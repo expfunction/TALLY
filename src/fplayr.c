@@ -6,7 +6,7 @@
 
 FPlayer g_player;
 
-void player_init(void)
+void fplayer_init(void)
 {
     g_player.w_pos.x = 0;
     g_player.w_pos.y = FX_FROM_FLOAT(1.5f); // Start a bit above ground
@@ -16,13 +16,13 @@ void player_init(void)
     g_player.w_rot.y = 0; // yaw
 }
 
-void player_set_start_pos(Vec4 pos)
+void fplayer_set_start_pos(Vec4 pos)
 {
     g_player.w_pos = pos;
     g_player.w_pos.y = FX_FROM_FLOAT(1.5f);
 }
 
-void player_update(Camera *cam)
+void fplayer_update(Camera *cam)
 {
     // 1. Mouse look
     MouseIO mouse;
@@ -30,7 +30,7 @@ void player_update(Camera *cam)
     {
         // dx and dy are integer screen deltas
         g_player.w_rot.y += FX_FROM_INT(mouse.dx) / 100; // Yaw (Reversed)
-        g_player.w_rot.x -= FX_FROM_INT(mouse.dy) / 100; // Pitch
+        g_player.w_rot.x += FX_FROM_INT(mouse.dy) / 100; // Pitch
 
         // Clamp pitch to avoid flipping
         i32 pitch_limit = FX_FROM_FLOAT(1.5f); // ~85 degrees
@@ -70,8 +70,8 @@ void player_update(Camera *cam)
     }
 
     // Hook camera
-    Vec3 p = { g_player.w_pos.x, g_player.w_pos.y, g_player.w_pos.z };
-    Vec3 r = { g_player.w_rot.x, g_player.w_rot.y, 0 };
+    Vec3 p = {g_player.w_pos.x, g_player.w_pos.y, g_player.w_pos.z};
+    Vec3 r = {g_player.w_rot.x, g_player.w_rot.y, 0};
     cam_init(cam, &p, &r, CAM_PROJ_PERSPECTIVE);
 
     // Optional: Collide camera against the world walls using physics system

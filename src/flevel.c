@@ -141,7 +141,7 @@ void flevel_spawn_entities_from_grid(const char *grid)
         {
         case 'P':
             // Set player start
-            player_set_start_pos(pos);
+            fplayer_set_start_pos(pos);
             break;
         case 'D':
             // Spawn Enforcer
