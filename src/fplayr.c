@@ -16,6 +16,12 @@ void player_init(void)
     g_player.w_rot.y = 0; // yaw
 }
 
+void player_set_start_pos(Vec4 pos)
+{
+    g_player.w_pos = pos;
+    g_player.w_pos.y = FX_FROM_FLOAT(1.5f);
+}
+
 void player_update(Camera *cam)
 {
     // 1. Mouse look

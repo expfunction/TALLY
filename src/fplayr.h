@@ -18,6 +18,7 @@ typedef struct FPlayer_s
 extern FPlayer g_player;
 
 void player_init(void);
+void player_set_start_pos(Vec4 pos);
 void player_update(Camera *cam);
 
 #endif

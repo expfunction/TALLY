@@ -6,6 +6,7 @@
 #include <memory.h>
 #include <string.h>
 #include <stdlib.h>
+#include "CORE/CENG.H"
 #include "CORE/CYBER.H"
 #include "CORE/FIXED.H"
 #include "CORE/PLATFRM.H"
@@ -34,10 +35,13 @@ static BlastConfig g_blast_cfg = {
 static PCM8UFile m_menu, m_01, m_02, m_03, m_04, m_05, m_06, m_over, m_win;
 static int menuplayed = 0, m_01played = 0, m_02played = 0, m_03played = 0, m_04played = 0, m_05played = 0, m_06played = 0, gameoverplayed = 0, winplayed = 0;
 
+/* Sprites */
+Sprite sun_spr, moon_spr;
+
 int main(int argc, char **argv)
 {
     Camera cam;
-    ClipRect *screen_rect;
+    ClipRect screen_rect = {0, 0, FX_FROM_INT(SCREEN_W - 1), FX_FROM_INT(SCREEN_H)};
     Surface8 surf = {SCREEN_W, SCREEN_H, 0, 0};
     int loopdone = 0;
 
@@ -47,6 +51,8 @@ int main(int argc, char **argv)
 #ifdef PLATFORM_WIN64
     platfrm_chdir_project_root();
 #endif
+
+    init_console("THE TALLY - V0.1a Console Init");
 
     {
         EngCfg cfg;
@@ -59,9 +65,24 @@ int main(int argc, char **argv)
 
         if (!engine_init(&cfg))
         {
-            printf("Engine init failed\n");
+            console_log("Engine init failed\n");
             return 1;
         }
+
+        /* Load sky sprites*/
+        if (!load_sprite(&sun_spr, "ASSTS\\TEXTR\\SKY\\SUN.RAW", 16, 16))
+        {
+            console_log("Sun raw not raw");
+            goto QUIT;
+        }
+        if (!load_sprite(&moon_spr, "ASSTS\\TEXTR\\SKY\\MOON.RAW", 16, 16))
+        {
+            console_log("Moon raw not raw");
+            goto QUIT;
+        }
+        sky_init(&sun_spr, &moon_spr);
+
+        console_log("Audio systems init.");
         blast_init(&g_blast_cfg);
         smix_init(22050);
     }
@@ -73,13 +94,11 @@ int main(int argc, char **argv)
         cam_init(&cam, &camp, &camr, CAM_PROJ_PERSPECTIVE);
     }
 
-    screen_rect = (ClipRect *)malloc(sizeof(ClipRect) * SCREEN_SIZE);
     surf.back = vga_backbuffer();
 
     /* Title, background tile, game over, sounds */
     {
     }
-
     cv_io_keyboard_init();
     cv_io_mouse_init(SCREEN_W, SCREEN_H, CV_MOUSE_MODE_MOUSELOOK);
 
@@ -98,7 +117,6 @@ int main(int argc, char **argv)
         audio_update();
 
         smix_update(&cam);
-
         if (cv_io_key_down(KEY_ESC))
         {
 
@@ -108,8 +126,8 @@ int main(int argc, char **argv)
         vga_clear_page(0, 0, SCREEN_SIZE);
         vga_clear_depth();
 
-        flevel_draw(&cam, &surf, screen_rect);
-        fentity_draw();
+        flevel_draw(&cam, &surf, &screen_rect);
+        fentity_draw(&cam, &surf, &screen_rect);
         ui_draw();
 
         vga_flip(surf.back);

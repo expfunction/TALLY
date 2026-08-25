@@ -5,6 +5,7 @@
 #include "CORE/MMATERL.H"
 #include "CORE/MTEXTUR.H"
 #include "fentity.h"
+#include "fplayr.h"
 
 const char *MAP_BARN =
     "########################"
@@ -140,20 +141,32 @@ void flevel_spawn_entities_from_grid(const char *grid)
         {
         case 'P':
             // Set player start
-            // player_set_start_pos(pos);
+            player_set_start_pos(pos);
             break;
         case 'D':
             // Spawn Enforcer
-            // entity_spawn(ENT_TYPE_ENFORCER, pos);
+            fentity_spawn(ENT_TYPE_ENFORCER, pos);
             break;
         case '4':
             // Spawn Unit 4
+            fentity_spawn(ENT_TYPE_UNIT4, pos);
             break;
         case 'R':
             // Spawn Radio
+            fentity_spawn(ENT_TYPE_RADIO, pos);
             break;
         case 'B':
             // Spawn Boxer
+            fentity_spawn(ENT_TYPE_BOXER, pos);
+            break;
+        case 'V':
+            fentity_spawn(ENT_TYPE_VAN, pos);
+            break;
+        case '+':
+            fentity_spawn(ENT_TYPE_MEDKIT, pos);
+            break;
+        case 'F':
+            fentity_spawn(ENT_TYPE_FACE, pos);
             break;
         case 'S':
         case 'G':
@@ -163,7 +176,6 @@ void flevel_spawn_entities_from_grid(const char *grid)
         case 'X':
         case 'I':
         case 'O':
-        case 'V':
         case 'C':
         case 'H':
         case 'N':
@@ -186,12 +198,12 @@ void flevel_spawn_entities_from_grid(const char *grid)
 
 void flevel_load(const char *mapName)
 {
-    printf("Loading map: %s\n", mapName);
+    console_log("Loading map: %s\n", mapName);
 
     // CyberVGA's engine_load_world handles both .CWR and .COC internally
     if (!engine_load_world(mapName))
     {
-        printf("Failed to load map: %s\n", mapName);
+        console_log("Failed to load map: %s\n", mapName);
     }
 
     // Despawn old entities and spawn new ones from the map file
