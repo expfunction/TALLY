@@ -19,35 +19,19 @@
 #define SCREEN_W 320
 #define SCREEN_H 240
 
-
 /* Default sound config */
 static BlastConfig g_blast_cfg = {
     0x220, 5, 1, 22050};
 
-typedef enum
-{
-    STATE_TITLE,
-    STATE_MENU,
-    STATE_PLAYING,
-    STATE_GAMEOVER,
-    STATE_WIN,
-    STATE_HELP
-} GameState;
+#include "src/game.h"
+#include "src/player.h"
+#include "src/level.h"
+#include "src/entity.h"
+#include "src/ui.h"
+#include "src/audio.h"
 
-
-typedef struct
-{
-    
-} Player;
-
-
-
-static GameState g_state = STATE_TITLE;
-
-static PCM8UFile m_menu, m_01, m_02, m_03,m_04,m_05,m_06 , m_over, m_win;
-static int menuplayed = 0, m_01played = 0,m_02played = 0,m_03played = 0,m_04played = 0,m_05played = 0,m_06played = 0, gameoverplayed = 0, winplayed = 0;
-;
-
+static PCM8UFile m_menu, m_01, m_02, m_03, m_04, m_05, m_06, m_over, m_win;
+static int menuplayed = 0, m_01played = 0, m_02played = 0, m_03played = 0, m_04played = 0, m_05played = 0, m_06played = 0, gameoverplayed = 0, winplayed = 0;
 
 int main(int argc, char **argv)
 {
@@ -91,7 +75,6 @@ int main(int argc, char **argv)
 
     /* Title, background tile, game over, sounds */
     {
-       
     }
 
     while (!loopdone)
@@ -104,12 +87,8 @@ int main(int argc, char **argv)
             loopdone = 1;
         }
 
-        dt = FX_TO_FLOAT(g_clock.dt);
-
         vga_clear_page(0, 0, SCREEN_SIZE);
         vga_clear_depth();
-
-       
 
         vga_flip(surf.back);
     }
@@ -117,3 +96,11 @@ QUIT:
     engine_shutdown();
     return 0;
 }
+
+// Unity Build includes
+#include "src/game.c"
+#include "src/player.c"
+#include "src/level.c"
+#include "src/entity.c"
+#include "src/ui.c"
+#include "src/audio.c"
