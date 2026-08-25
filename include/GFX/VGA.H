@@ -147,64 +147,6 @@ extern bool g_lighting_pbr;
 extern u8 bayer4x4[4][4];
 extern const u8 g_clamp0_31[256];
 
-/* Force 64-byte cache line alignment for modern x86/x64 */
-#if defined(PLATFORM_WIN64)
-    #if defined(_MSC_VER)
-        #define CACHE_ALIGN __declspec(align(64))
-    #elif defined(__GNUC__) || defined(__clang__)
-        #define CACHE_ALIGN __attribute__((aligned(64)))
-    #else
-        #define CACHE_ALIGN 
-    #endif
-#else
-    /* DJGPP object files have a maximum alignment of 16 */
-    #if defined(__GNUC__) || defined(__clang__)
-        #define CACHE_ALIGN __attribute__((aligned(16)))
-    #else
-        #define CACHE_ALIGN 
-    #endif
-#endif
-
-CACHE_ALIGN typedef struct {
-    /* 1. Pointers first (8 bytes on Win64, 4 bytes on DOS) */
-    const i32 *bayer_ptr;
-    const i32 *bayer_fog_ptr;
-    u8 *row_ptr;
-    u32 *zbuf_ptr;
-    const u8 *tex;
-    const u8 *tex_spec;
-    
-    /* 2. Most frequently accessed accumulators */
-    i32 u_cur;
-    i32 v_cur;
-    i32 oow_cur;
-    i32 lit_cur;
-    i32 spec_cur;
-    i32 fog_t_cur;
-    
-    /* 3. Sub-span step deltas */
-    i32 du_sub;
-    i32 dv_sub;
-    i32 doow_sub;
-    i32 dlit_sub;
-    i32 dspec_sub;
-    i32 dfog_sub;
-    
-    /* 4. Masks and constants */
-    u32 tex_mask;
-    i32 tex_shift;
-    u8 active_color_key;
-    int alpha;
-    int bayer_shift;
-    const u8 *bayer_thresh_ptr;
-} RasterState;
-
-extern CACHE_ALIGN RasterState g_rast;
-typedef void (*SpanFunc)(void);
-extern SpanFunc g_slide_spans[8];
-
-void vga_init_jit(void);
-
 typedef struct TriSetup_s
 {
     const Vec2 *vt, *vm, *vb;
