@@ -1,5 +1,5 @@
-#ifndef AUDIO_H
-#define AUDIO_H
+#ifndef FAUDIO_H
+#define FAUDIO_H
 
 void audio_init(void);
 void audio_play_sfx(int id);

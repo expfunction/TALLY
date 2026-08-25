@@ -15,6 +15,7 @@
 #include "RNDR/FONT.H"
 #include "RNDR/SPRIT.H"
 #include "CORE/TYPES/GFX.H"
+#include "IO/IO.H"
 
 #define SCREEN_W 320
 #define SCREEN_H 240
@@ -23,14 +24,12 @@
 static BlastConfig g_blast_cfg = {
     0x220, 5, 1, 22050};
 
-static Entity g_entities[128];
-
-#include "src/game.h"
+#include "src/fgame.h"
 #include "src/fplayr.h"
-#include "src/level.h"
-#include "src/entity.h"
-#include "src/ui.h"
-#include "src/audio.h"
+#include "src/flevel.h"
+#include "src/fentity.h"
+#include "src/fui.h"
+#include "src/faudio.h"
 
 static PCM8UFile m_menu, m_01, m_02, m_03, m_04, m_05, m_06, m_over, m_win;
 static int menuplayed = 0, m_01played = 0, m_02played = 0, m_03played = 0, m_04played = 0, m_05played = 0, m_06played = 0, gameoverplayed = 0, winplayed = 0;
@@ -38,6 +37,7 @@ static int menuplayed = 0, m_01played = 0, m_02played = 0, m_03played = 0, m_04p
 int main(int argc, char **argv)
 {
     Camera cam;
+    ClipRect *screen_rect;
     Surface8 surf = {SCREEN_W, SCREEN_H, 0, 0};
     int loopdone = 0;
 
@@ -73,36 +73,57 @@ int main(int argc, char **argv)
         cam_init(&cam, &camp, &camr, CAM_PROJ_PERSPECTIVE);
     }
 
+    screen_rect = (ClipRect *)malloc(sizeof(ClipRect) * SCREEN_SIZE);
     surf.back = vga_backbuffer();
 
     /* Title, background tile, game over, sounds */
     {
     }
 
+    cv_io_keyboard_init();
+    cv_io_mouse_init(SCREEN_W, SCREEN_H, CV_MOUSE_MODE_MOUSELOOK);
+
     while (!loopdone)
     {
+
         engine_update(&cam);
+
+        cv_io_keyboard_poll();
+        cv_io_mouse_poll();
+
+        player_update(&cam);
+        flevel_update();
+        fentity_update();
+        ui_update();
+        audio_update();
+
         smix_update(&cam);
 
         if (cv_io_key_down(KEY_ESC))
         {
+
             loopdone = 1;
         }
 
         vga_clear_page(0, 0, SCREEN_SIZE);
         vga_clear_depth();
 
+        flevel_draw(&cam, &surf, screen_rect);
+        fentity_draw();
+        ui_draw();
+
         vga_flip(surf.back);
     }
 QUIT:
+    cv_io_keyboard_shutdown();
     engine_shutdown();
     return 0;
 }
 
 // Unity Build includes
-#include "src/game.c"
+#include "src/fgame.c"
 #include "src/fplayr.c"
-#include "src/level.c"
-#include "src/entity.c"
-#include "src/ui.c"
-#include "src/audio.c"
+#include "src/flevel.c"
+#include "src/fentity.c"
+#include "src/fui.c"
+#include "src/faudio.c"

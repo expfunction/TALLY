@@ -1,5 +1,5 @@
-#ifndef GAME_H
-#define GAME_H
+#ifndef FGAME_H
+#define FGAME_H
 
 typedef enum
 {
@@ -14,6 +14,8 @@ typedef enum
 extern GameState g_state;
 extern int g_loyalty;
 extern int g_doubt;
+extern int g_ammo;
+extern int g_health;
 
 void game_init(void);
 void game_update(void);

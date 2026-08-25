@@ -1,5 +1,5 @@
-#include "ui.h"
-#include "game.h"
+#include "fui.h"
+#include "fgame.h"
 
 void ui_init(void)
 {

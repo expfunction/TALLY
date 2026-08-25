@@ -1,10 +1,10 @@
-#include "level.h"
+#include "flevel.h"
 #include <stdio.h>
 #include <string.h>
 #include "CORE/CYBER.H"
 #include "CORE/MMATERL.H"
 #include "CORE/MTEXTUR.H"
-#include "entity.h"
+#include "fentity.h"
 
 const char *MAP_BARN =
     "########################"
@@ -110,12 +110,12 @@ const char *MAP_MILL =
     "#..$...#........#......#"
     "########################";
 
-void level_init(void)
+void flevel_init(void)
 {
     // Initialize level resources
 }
 
-void level_spawn_entities_from_grid(const char *grid)
+void flevel_spawn_entities_from_grid(const char *grid)
 {
     // Iterate over 24x24 grid and spawn entities based on characters
     int row = 0;
@@ -184,7 +184,7 @@ void level_spawn_entities_from_grid(const char *grid)
     }
 }
 
-void level_load(const char *mapName)
+void flevel_load(const char *mapName)
 {
     printf("Loading map: %s\n", mapName);
 
@@ -201,19 +201,19 @@ void level_load(const char *mapName)
     // Now spawn entities from our ascii grid definitions
     if (strstr(mapName, "BARN") || strstr(mapName, "HUB"))
     {
-        level_spawn_entities_from_grid(MAP_BARN);
+        flevel_spawn_entities_from_grid(MAP_BARN);
     }
     else if (strstr(mapName, "HENHOUSE") || strstr(mapName, "TENEMENTS"))
     {
-        level_spawn_entities_from_grid(MAP_HENHOUSE);
+        flevel_spawn_entities_from_grid(MAP_HENHOUSE);
     }
     else if (strstr(mapName, "MINISTRY") || strstr(mapName, "ARCHIVES"))
     {
-        level_spawn_entities_from_grid(MAP_MINISTRY);
+        flevel_spawn_entities_from_grid(MAP_MINISTRY);
     }
     else if (strstr(mapName, "MILL") || strstr(mapName, "GENERATOR"))
     {
-        level_spawn_entities_from_grid(MAP_MILL);
+        flevel_spawn_entities_from_grid(MAP_MILL);
     }
 }
 
@@ -230,7 +230,7 @@ void level_swap_wall_texture(const char *matName, const char *texName)
     }
 }
 
-int level_is_in_warm_light(Vec4 position)
+int flevel_is_in_warm_light(Vec4 position)
 {
     // Find closest light in g_world
     PointLight *closest = NULL;
@@ -260,15 +260,15 @@ int level_is_in_warm_light(Vec4 position)
     return 0;
 }
 
-void level_update(void)
+void flevel_update(void)
 {
     // Level specific update logic (e.g., hot-swapping wall textures based on Loyalty/Doubt)
     // Managed externally via game state transitions, calling level_swap_wall_texture
     // TODO: Manage WARM vs COLD lighting logic based on spatial zones
 }
 
-void level_draw(Camera *cam, Surface8 *surf)
+void flevel_draw(Camera *cam, Surface8 *surf, const ClipRect *clip_rect)
 {
     // Render the loaded world (brushes, point lights, entities) via CyberVGA
-    engine_render(cam, surf, NULL);
+    engine_render(cam, surf, clip_rect);
 }
