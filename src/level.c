@@ -1,12 +1,187 @@
 #include "level.h"
 #include <stdio.h>
+#include <string.h>
 #include "CORE/CYBER.H"
 #include "CORE/MMATERL.H"
 #include "CORE/MTEXTUR.H"
+#include "entity.h"
+
+const char *MAP_BARN =
+    "########################"
+    "#........######........#"
+    "#........##==##........#"
+    "#....R...##FF##...R....#"
+    "#........##==##........#"
+    "#.......................#"
+    "#.........!!!!..........#"
+    "#.......................#"
+    "#####/############/#####"
+    "#.........+.............#"
+    "#....T....+....G........#"
+    "#.........+.............#"
+    "#~~~~.....+......::::...#"
+    "#~~~~............::::...#"
+    "####/##############^####"
+    "#........#..............#"
+    "#...P..../..............#"
+    "#........#..............#"
+    "#........#....S.........#"
+    "####$#####..............#"
+    "#........#..............#"
+    "#........#..............#"
+    "#........#..............#"
+    "########################";
+
+const char *MAP_HENHOUSE =
+    "########################"
+    "#NNN:#NNN:#NNN:#....S.*#"
+    "#H...#H...#H...#.......#"
+    "#....#....#....#.......#"
+    "##/####/####/####*######"
+    "#......................#"
+    "#..~~~~....~~~~....D...#"
+    "#..~~~~....~~~~........#"
+    "#..~~~~....~~~~........#"
+    "####/################/##"
+    "#::::#........#::::#H..#"
+    "#::::#..R.....#::::#...#"
+    "#N.H.#........#N...#...#"
+    "##/####/########/####/##"
+    "#......................#"
+    "#.....D................#"
+    "#......................#"
+    "########/#######+#######"
+    "#P.....#.......#..H!!!!#"
+    "#......#..M....#.......#"
+    "#......#.......#.......#"
+    "#......#.......#...$...#"
+    "#......#.......#.......#"
+    "########################";
+
+const char *MAP_MINISTRY =
+    "########################"
+    "#S....#::::#....S#^^^^# "
+    "#.....#:X::#.....#^^^^# "
+    "#..I..#::::#..I..#^^^^# "
+    "##/#####/#####/###^#### "
+    "#....................4.#"
+    "#....................P.#"
+    "#.........R............#"
+    "####/##############/####"
+    "#......#........#......#"
+    "#..S...#...M....#..K...#"
+    "#......#........#......#"
+    "##/#####!!!!!!!!#/######"
+    "#......#........#......#"
+    "#..D...#........#..D...#"
+    "#......#........#......#"
+    "########/######C########"
+    "#~~~~~~#........#%%%%%%#"
+    "#~~~~~~#...$....#..O.O.#"
+    "#~~~~~~#........#%%%%%%#"
+    "#..I...#........#!.....#"
+    "#......#........#......#"
+    "#......#........#......#"
+    "########################";
+
+const char *MAP_MILL =
+    "########################"
+    "#r*....#~~~~~~#....D...#"
+    "#......#~~~~~~#........#"
+    "#......#~~~~~~#........#"
+    "##/#####~~~~~~#####/####"
+    "#......................#"
+    "#..........BB..........#"
+    "#..........BB..........#"
+    "#..........ee..........#"
+    "#......................#"
+    "#....D............4....#"
+    "#......................#"
+    "####/##############/####"
+    "#P.....#........#%%%%%%#"
+    "#......#...R....#..O.O.#"
+    "#......#........#%%%%%%#"
+    "#......#........#!.....#"
+    "########/########/######"
+    "#~~~~~~#........#~~~~~~#"
+    "#~~~~~~#...V....#~~~~~~#"
+    "#~~~~~~#...e....#~~~~~~#"
+    "#......#........#......#"
+    "#..$...#........#......#"
+    "########################";
 
 void level_init(void)
 {
-    // TODO: Add ascii level string here.
+    // Initialize level resources
+}
+
+void level_spawn_entities_from_grid(const char *grid)
+{
+    // Iterate over 24x24 grid and spawn entities based on characters
+    int row = 0;
+    int col = 0;
+    for (int i = 0; grid[i] != '\0'; i++)
+    {
+        char c = grid[i];
+
+        // Skip newlines if any
+        if (c == '\n' || c == '\r')
+            continue;
+
+        // Calculate world position based on grid (assuming each tile is 1 world unit, i.e., FX_ONE)
+        // or whatever CyberVGA's scale is. Usually 1.0 or 2.0. Let's assume 1.0
+        Vec4 pos;
+        pos.x = FX_FROM_INT(col);
+        pos.y = 0; // Ground level
+        pos.z = FX_FROM_INT(row);
+        pos.w = FX_ONE;
+
+        switch (c)
+        {
+        case 'P':
+            // Set player start
+            // player_set_start_pos(pos);
+            break;
+        case 'D':
+            // Spawn Enforcer
+            // entity_spawn(ENT_TYPE_ENFORCER, pos);
+            break;
+        case '4':
+            // Spawn Unit 4
+            break;
+        case 'R':
+            // Spawn Radio
+            break;
+        case 'B':
+            // Spawn Boxer
+            break;
+        case 'S':
+        case 'G':
+        case 'M':
+        case '!':
+        case '*':
+        case 'X':
+        case 'I':
+        case 'O':
+        case 'V':
+        case 'C':
+        case 'H':
+        case 'N':
+        case '$':
+        case 'e':
+            // Other entities/triggers
+            break;
+        default:
+            break;
+        }
+
+        col++;
+        if (col >= 24)
+        {
+            col = 0;
+            row++;
+        }
+    }
 }
 
 void level_load(const char *mapName)
@@ -22,6 +197,24 @@ void level_load(const char *mapName)
     // Despawn old entities and spawn new ones from the map file
     engine_despawn_entities();
     engine_spawn_world_entities();
+
+    // Now spawn entities from our ascii grid definitions
+    if (strstr(mapName, "BARN") || strstr(mapName, "HUB"))
+    {
+        level_spawn_entities_from_grid(MAP_BARN);
+    }
+    else if (strstr(mapName, "HENHOUSE") || strstr(mapName, "TENEMENTS"))
+    {
+        level_spawn_entities_from_grid(MAP_HENHOUSE);
+    }
+    else if (strstr(mapName, "MINISTRY") || strstr(mapName, "ARCHIVES"))
+    {
+        level_spawn_entities_from_grid(MAP_MINISTRY);
+    }
+    else if (strstr(mapName, "MILL") || strstr(mapName, "GENERATOR"))
+    {
+        level_spawn_entities_from_grid(MAP_MILL);
+    }
 }
 
 void level_swap_wall_texture(const char *matName, const char *texName)
