@@ -47,5 +47,6 @@ void fentity_init(void);
 void fentity_update(void);
 void fentity_draw(Camera *cam, Surface8 *surf, const ClipRect *clip_rect);
 void fentity_spawn(FEntityType type, Vec4 pos);
+FEntity *fentity_get_all(void);
 
 #endif

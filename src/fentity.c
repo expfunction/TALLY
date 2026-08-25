@@ -35,6 +35,11 @@ void fentity_spawn(FEntityType type, Vec4 pos)
     }
 }
 
+FEntity *fentity_get_all(void)
+{
+    return g_entities;
+}
+
 void fentity_update(void)
 {
     // Update AI state machines

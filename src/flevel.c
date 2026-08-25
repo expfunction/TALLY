@@ -215,30 +215,17 @@ void flevel_load(const char *mapName)
     {
         flevel_spawn_entities_from_grid(MAP_BARN);
     }
-    else if (strstr(mapName, "HENHOUSE") || strstr(mapName, "TENEMENTS"))
+    else if (strstr(mapName, "HENHOUSE") || strstr(mapName, "MAP01") || strstr(mapName, "TENEMENTS"))
     {
         flevel_spawn_entities_from_grid(MAP_HENHOUSE);
     }
-    else if (strstr(mapName, "MINISTRY") || strstr(mapName, "ARCHIVES"))
+    else if (strstr(mapName, "MINISTRY") || strstr(mapName, "MAP02") || strstr(mapName, "ARCHIVES"))
     {
         flevel_spawn_entities_from_grid(MAP_MINISTRY);
     }
-    else if (strstr(mapName, "MILL") || strstr(mapName, "GENERATOR"))
+    else if (strstr(mapName, "MILL") || strstr(mapName, "MAP03") || strstr(mapName, "GENERATOR"))
     {
         flevel_spawn_entities_from_grid(MAP_MILL);
-    }
-}
-
-void level_swap_wall_texture(const char *matName, const char *texName)
-{
-    int mat_idx = materials_find_by_name(matName);
-    if (mat_idx >= 0)
-    {
-        int tex_idx = textures_find_by_name(m_textures, MAX_TEXTURES, texName);
-        if (tex_idx >= 0)
-        {
-            m_mat_texture_id[mat_idx] = tex_idx;
-        }
     }
 }
 

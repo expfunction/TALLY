@@ -26,8 +26,8 @@ extern int g_doubt;
 extern int g_ammo;
 extern int g_health;
 
-void game_init(void);
-void game_load_level(LevelID level);
-void game_update(void);
+void fgame_init(void);
+void fgame_load_level(LevelID level);
+void fgame_update(void);
 
 #endif

@@ -10,37 +10,41 @@ int g_doubt = 0;
 int g_ammo = 10;
 int g_health = 100;
 
-void game_init(void)
+void fgame_init(void)
 {
-    g_state = STATE_TITLE;
+    console_log("Game init");
+    g_state = STATE_PLAYING;
     g_current_level = LEVEL_HUB;
     g_loyalty = 0;
     g_doubt = 0;
     g_ammo = 10; // Starting ammo
     g_health = 100;
+    
+    // Ensure the level loads when skipping the title screen
+    fgame_load_level(LEVEL_HUB);
 }
 
-void game_load_level(LevelID level)
+void fgame_load_level(LevelID level)
 {
     g_current_level = level;
     switch (level)
     {
     case LEVEL_HUB:
-        flevel_load("ASSTS\\MAPS\\MAP_BARN.CWR"); // Assuming this is the filename
+        flevel_load("ASSTS\\WORLD\\HUB.CWR");
         break;
     case LEVEL_MISSION1:
-        flevel_load("ASSTS\\MAPS\\MAP_HENHOUSE.CWR");
+        flevel_load("ASSTS\\WORLD\\MAP01.CWR");
         break;
     case LEVEL_MISSION2:
-        flevel_load("ASSTS\\MAPS\\MAP_MINISTRY.CWR");
+        flevel_load("ASSTS\\WORLD\\MAP02.CWR"); // Assuming this will be the naming scheme
         break;
     case LEVEL_MISSION3:
-        flevel_load("ASSTS\\MAPS\\MAP_MILL.CWR");
+        flevel_load("ASSTS\\WORLD\\MAP03.CWR");
         break;
     }
 }
 
-void game_update(void)
+void fgame_update(void)
 {
     // Handle game state transitions and logic
     if (g_state == STATE_TITLE)
@@ -49,7 +53,7 @@ void game_update(void)
         if (cv_io_key_pressed_now(KEY_ENTER))
         {
             g_state = STATE_PLAYING;
-            game_load_level(LEVEL_HUB);
+            fgame_load_level(LEVEL_HUB);
         }
     }
 }

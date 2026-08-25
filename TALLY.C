@@ -98,6 +98,7 @@ int main(int argc, char **argv)
 
     /* Title, background tile, game over, sounds */
     {
+        fgame_init();
     }
     cv_io_keyboard_init();
     cv_io_mouse_init(SCREEN_W, SCREEN_H, CV_MOUSE_MODE_MOUSELOOK);
@@ -111,9 +112,9 @@ int main(int argc, char **argv)
 
         cv_io_keyboard_poll();
         cv_io_mouse_poll();
-        console_log("updater");
-        game_update();
-        if (g_state == STATE_PLAYING) {
+        fgame_update();
+        if (g_state == STATE_PLAYING)
+        {
             player_update(&cam);
             flevel_update();
             fentity_update();
@@ -131,7 +132,8 @@ int main(int argc, char **argv)
         vga_clear_page(0, 0, SCREEN_SIZE);
         vga_clear_depth();
 
-        if (g_state == STATE_PLAYING) {
+        if (g_state == STATE_PLAYING)
+        {
             flevel_draw(&cam, &surf, &screen_rect);
             fentity_draw(&cam, &surf, &screen_rect);
         }
