@@ -23,8 +23,10 @@
 static BlastConfig g_blast_cfg = {
     0x220, 5, 1, 22050};
 
+static Entity g_entities[128];
+
 #include "src/game.h"
-#include "src/player.h"
+#include "src/fplayr.h"
 #include "src/level.h"
 #include "src/entity.h"
 #include "src/ui.h"
@@ -99,7 +101,7 @@ QUIT:
 
 // Unity Build includes
 #include "src/game.c"
-#include "src/player.c"
+#include "src/fplayr.c"
 #include "src/level.c"
 #include "src/entity.c"
 #include "src/ui.c"

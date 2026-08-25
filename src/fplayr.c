@@ -1,6 +1,6 @@
-#include "player.h"
+#include "fplayr.h"
 
-Player g_player;
+FPlayer g_player;
 
 void player_init(void)
 {
@@ -11,11 +11,11 @@ void player_init(void)
     g_player.w_rot.y = 0;
 }
 
-void player_update(Camera* cam)
+void player_update(Camera *cam)
 {
     // Update camera based on player position/rotation
     // Update player based on input
-    
+
     // Example hook to camera
     // cam->pos = g_player.w_pos;
 }

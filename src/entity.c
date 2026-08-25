@@ -6,9 +6,8 @@ static Entity g_entities[MAX_ENTITIES];
 
 void entity_init(void)
 {
-    for (int i = 0; i < MAX_ENTITIES; i++) {
-        g_entities[i].active = 0;
-    }
+    Entity *first = &g_entities[0];
+    first = (Entity *)malloc(sizeof(Entity) * MAX_ENTITIES);
 }
 
 void entity_update(void)
