@@ -13,21 +13,28 @@ typedef enum
 
 typedef enum
 {
-    LEVEL_HUB = 0,
-    LEVEL_MISSION1 = 1,
-    LEVEL_MISSION2 = 2,
-    LEVEL_MISSION3 = 3
+    LEVEL_BARRACKS = 0,
+    LEVEL_RATIONBLOCK = 1,
+    LEVEL_GENERATOR = 2
 } LevelID;
 
 extern GameState g_state;
 extern LevelID g_current_level;
+
+// 1st Gen Compatibility
 extern int g_loyalty;
 extern int g_doubt;
+extern int g_boxer_dead;
+
+// 3rd Gen States
+extern int g_record_kept;
+extern int g_access_card_given;
+extern int g_assume_control;
+
 extern int g_ammo;
 extern int g_health;
 extern int g_ending;
 extern int g_mission_progress;
-extern int g_boxer_dead;
 
 void fgame_init(void);
 void fgame_load_level(LevelID level);

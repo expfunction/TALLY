@@ -4,31 +4,44 @@
 #include <stdio.h>
 
 GameState g_state = STATE_TITLE;
-LevelID g_current_level = LEVEL_HUB;
+LevelID g_current_level = LEVEL_BARRACKS;
+
+// 1st Gen Compatibility
 int g_loyalty = 0;
 int g_doubt = 0;
+int g_boxer_dead = 0;
+
+// 3rd Gen States
+int g_record_kept = 0;
+int g_access_card_given = 0;
+int g_assume_control = 0;
+
 int g_ammo = 10;
 int g_health = 100;
 int g_ending = 0;
 int g_mission_progress = 1;
-int g_boxer_dead = 0;
 
 void fgame_init(void)
 {
     console_log("Game init");
     g_state = STATE_PLAYING;
-    g_current_level = LEVEL_HUB;
+    g_current_level = LEVEL_BARRACKS;
     g_loyalty = 0;
     g_doubt = 0;
+    g_boxer_dead = 0;
+    
+    g_record_kept = 0;
+    g_access_card_given = 0;
+    g_assume_control = 0;
+
     g_ammo = 10; // Starting ammo
     g_health = 100;
     g_ending = 0;
     g_mission_progress = 1;
-    g_boxer_dead = 0;
 
     // Ensure the level loads when skipping the title screen
     flevel_init();
-    fgame_load_level(LEVEL_HUB);
+    fgame_load_level(LEVEL_BARRACKS);
 }
 
 void fgame_load_level(LevelID level)
@@ -36,17 +49,14 @@ void fgame_load_level(LevelID level)
     g_current_level = level;
     switch (level)
     {
-    case LEVEL_HUB:
-        flevel_load("ASSTS\\WORLD\\HUB.CWR");
+    case LEVEL_BARRACKS:
+        flevel_load("ASSTS\\WORLD\\BARRACKS.CWR");
         break;
-    case LEVEL_MISSION1:
-        flevel_load("ASSTS\\WORLD\\MAP01.CWR");
+    case LEVEL_RATIONBLOCK:
+        flevel_load("ASSTS\\WORLD\\RATION.CWR");
         break;
-    case LEVEL_MISSION2:
-        flevel_load("ASSTS\\WORLD\\MAP02.CWR");
-        break;
-    case LEVEL_MISSION3:
-        flevel_load("ASSTS\\WORLD\\MAP03.CWR");
+    case LEVEL_GENERATOR:
+        flevel_load("ASSTS\\WORLD\\GENERATOR.CWR");
         break;
     }
 }
@@ -60,7 +70,7 @@ void fgame_update(void)
         if (cv_io_key_pressed_now(KEY_ENTER))
         {
             g_state = STATE_PLAYING;
-            fgame_load_level(LEVEL_HUB);
+            fgame_load_level(LEVEL_BARRACKS);
         }
     }
 }

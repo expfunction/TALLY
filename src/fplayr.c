@@ -9,7 +9,7 @@ FPlayer g_player;
 void fplayer_init(void)
 {
     g_player.w_pos.x = 0;
-    g_player.w_pos.y = FX_FROM_FLOAT(1.5f); // Start a bit above ground
+    g_player.w_pos.y = FX_FROM_FLOAT(0.5f); // Start a bit above ground
     g_player.w_pos.z = 0;
     g_player.w_pos.w = FX_ONE;
     g_player.w_rot.x = 0; // pitch
@@ -19,7 +19,7 @@ void fplayer_init(void)
 void fplayer_set_start_pos(Vec4 pos)
 {
     g_player.w_pos = pos;
-    g_player.w_pos.y = FX_FROM_FLOAT(1.5f);
+    g_player.w_pos.y = FX_FROM_FLOAT(0.5f);
 }
 
 void fplayer_update(Camera *cam)
@@ -85,24 +85,30 @@ void fplayer_update(Camera *cam)
         FEntity *ents = fentity_get_all();
         for (int i = 0; i < 128; i++)
         {
-            if (!ents[i].active) continue;
+            if (!ents[i].active)
+                continue;
 
             i32 dist = vec4_dist(&g_player.w_pos, &ents[i].pos);
             if (dist < FX_FROM_FLOAT(2.5f))
             {
                 if (ents[i].type == ENT_TYPE_EXTRACTION)
                 {
-                    if (g_current_level == LEVEL_HUB) {
-                        if (g_mission_progress == 1) fgame_load_level(LEVEL_MISSION1);
-                        else if (g_mission_progress == 2) fgame_load_level(LEVEL_MISSION2);
-                        else if (g_mission_progress == 3) fgame_load_level(LEVEL_MISSION3);
-                        else g_state = STATE_WIN; // After endings
-                    } else {
+                    if (g_current_level == LEVEL_BARRACKS)
+                    {
+                        if (g_mission_progress == 1)
+                            fgame_load_level(LEVEL_RATIONBLOCK);
+                        else if (g_mission_progress == 2)
+                            fgame_load_level(LEVEL_GENERATOR);
+                        else
+                            g_state = STATE_WIN; // After endings
+                    }
+                    else
+                    {
                         g_mission_progress++;
-                        fgame_load_level(LEVEL_HUB);
+                        fgame_load_level(LEVEL_BARRACKS);
                     }
                     // Prevent multiple triggers
-                    g_player.w_pos.x += FX_FROM_FLOAT(5.0f); 
+                    g_player.w_pos.x += FX_FROM_FLOAT(5.0f);
                     break;
                 }
                 else if (ents[i].type == ENT_TYPE_RADIO)
@@ -115,7 +121,8 @@ void fplayer_update(Camera *cam)
                 else if (ents[i].type == ENT_TYPE_BOXER)
                 {
                     // Boxer ending triggers
-                    if (!g_boxer_dead) {
+                    if (!g_boxer_dead)
+                    {
                         g_doubt += 1; // Read the law
                         // If doubt >= 3, ending B can happen at rathole
                     }
@@ -126,9 +133,12 @@ void fplayer_update(Camera *cam)
                     // Van logic (Ending A or C)
                     if (g_boxer_dead)
                     {
-                        if (g_loyalty >= 3 && g_doubt >= 2) {
+                        if (g_loyalty >= 3 && g_doubt >= 2)
+                        {
                             g_ending = 3; // C (Promotion)
-                        } else {
+                        }
+                        else
+                        {
                             g_ending = 1; // A (Reliable)
                         }
                         g_state = STATE_WIN;
@@ -159,10 +169,10 @@ void fplayer_update(Camera *cam)
             g_ammo--;
             // Direction is based on yaw/pitch
             Vec4 p_pos = g_player.w_pos;
-            p_pos.y += FX_FROM_FLOAT(1.0f); // eye height or weapon height
+            p_pos.y -= FX_FROM_FLOAT(0.1f); // slightly below eye height
 
             fentity_spawn(ENT_TYPE_PROJECTILE, p_pos);
-            
+
             // Set projectile direction and speed
             FEntity *ents = fentity_get_all();
             for (int i = 0; i < 128; i++)
@@ -174,7 +184,7 @@ void fplayer_update(Camera *cam)
                     i32 c_y = fx_cos(g_player.w_rot.y);
                     i32 s_x = fx_sin(g_player.w_rot.x);
                     i32 c_x = fx_cos(g_player.w_rot.x);
-                    
+
                     // Forward vector
                     ents[i].rot.x = fx_mul_q16(c_x, s_y);
                     ents[i].rot.y = -s_x;
