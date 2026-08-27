@@ -116,11 +116,18 @@ void ui_draw(void)
         int px = r_cx + r_x;
         int py = r_cy + r_y; // Since Z is forward, mapped to Y
 
-        // Fake map pings: Medkits show up as "TRAITOR" (red dot)
+        // Fake map pings: Medkits show up as "TRAITOR" (red dot) when Loyalty is high
         if (ents[i].type == ENT_TYPE_MEDKIT)
         {
-            gui_fill_rect(back, px - 1, py - 1, px + 1, py + 1, 40); // 40 = red
-            draw_text(back, px + 3, py - 2, "TRAITOR", BASIC_4, 40, -1);
+            if (g_loyalty >= 2)
+            {
+                gui_fill_rect(back, px - 1, py - 1, px + 1, py + 1, 40); // 40 = red
+                draw_text(back, px + 3, py - 2, "TRAITOR", BASIC_4, 40, -1);
+            }
+            else
+            {
+                draw_text(back, px - 2, py - 2, "+", BASIC_8, 31, -1); // 31 = white
+            }
         }
 
         // Enforcers are blue

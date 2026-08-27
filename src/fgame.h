@@ -25,6 +25,9 @@ extern int g_loyalty;
 extern int g_doubt;
 extern int g_ammo;
 extern int g_health;
+extern int g_ending;
+extern int g_mission_progress;
+extern int g_boxer_dead;
 
 void fgame_init(void);
 void fgame_load_level(LevelID level);

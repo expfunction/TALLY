@@ -11,7 +11,10 @@ typedef enum
     ENT_TYPE_RADIO,
     ENT_TYPE_MEDKIT,
     ENT_TYPE_VAN,
-    ENT_TYPE_FACE
+    ENT_TYPE_FACE,
+    ENT_TYPE_EXTRACTION,
+    ENT_TYPE_PROJECTILE,
+    ENT_TYPE_RATHOLE
 } FEntityType;
 
 typedef enum

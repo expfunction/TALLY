@@ -7,6 +7,14 @@
 #include "fentity.h"
 #include "fplayr.h"
 
+/**
+ * @brief Legend:
+ * F: The Face mural (never dies)
+ * !: WARM aisle (range 5)
+ * G: Pistol (WARM, range 4)
+ * P: Start (COLD yard leak, range 3)
+ * S: Scrap in shadow
+ */
 const char *MAP_BARN =
     "########################"
     "#........######........#"
@@ -33,6 +41,15 @@ const char *MAP_BARN =
     "#........#..............#"
     "########################";
 
+/**
+ * @brief Legend:
+ * S: Ledger (COLD, range 2)
+ * D: Grain hoard (WARM, range 6)
+ * R: Radio
+ * D: Enforcer (WARM collar, range 1)
+ * !: Last worker pen (COLD, range 3)
+ * M: Medkit Trap (Bright)
+ */
 const char *MAP_HENHOUSE =
     "########################"
     "#NNN:#NNN:#NNN:#....S.*#"
@@ -59,6 +76,17 @@ const char *MAP_HENHOUSE =
     "#......#.......#.......#"
     "########################";
 
+/**
+ * @brief Legend:
+ * S: Cold archives
+ * X: Stove (Burning truth makes gold)
+ * P: Start
+ * R: Radio
+ * M: Trap; K: Pass bait (WARM)
+ * !: Trigger (Renderer hitches 1 frame)
+ * C: Comrades door (Brightest light)
+ * O: Officers behind glass (Unlit)
+ */
 const char *MAP_MINISTRY =
     "########################"
     "#S....#::::#....S#^^^^# "
@@ -85,6 +113,12 @@ const char *MAP_MINISTRY =
     "#......#........#......#"
     "########################";
 
+/**
+ * @brief Legend:
+ * r: Rat hole (B ending)
+ * B: Boxer (COLD work-lamp, range 4)
+ * V: Recycling Van (WARM, range 6)
+ */
 const char *MAP_MILL =
     "########################"
     "#r*....#~~~~~~#....D...#"
@@ -140,8 +174,9 @@ void flevel_spawn_entities_from_grid(const char *grid)
         switch (c)
         {
         case 'P':
-            // Set player start
+            // Set player start and spawn extraction zone
             fplayer_set_start_pos(pos);
+            fentity_spawn(ENT_TYPE_EXTRACTION, pos);
             break;
         case 'D':
             // Spawn Enforcer
@@ -161,6 +196,9 @@ void flevel_spawn_entities_from_grid(const char *grid)
             break;
         case 'V':
             fentity_spawn(ENT_TYPE_VAN, pos);
+            break;
+        case 'r':
+            fentity_spawn(ENT_TYPE_RATHOLE, pos);
             break;
         case '+':
             fentity_spawn(ENT_TYPE_MEDKIT, pos);
@@ -227,6 +265,23 @@ void flevel_load(const char *mapName)
     {
         flevel_spawn_entities_from_grid(MAP_MILL);
     }
+
+    // Hot-swap Commandment Wall texture if in Hub based on endings / doubt
+    if (strstr(mapName, "BARN") || strstr(mapName, "HUB"))
+    {
+        int face_tex_id = textures_find_by_name(m_textures, MAX_TEXTURES, "Mat_Wall_Face_Mural");
+        if (face_tex_id >= 0) {
+            if (g_doubt >= 3) {
+                // Change to TRUST NO ONE or equivalent
+                int trust_id = textures_find_by_name(m_textures, MAX_TEXTURES, "WALLRED");
+                if (trust_id >= 0) m_textures[face_tex_id] = m_textures[trust_id];
+            } else if (g_loyalty >= 3) {
+                // You become the new face (just keep it or change it)
+                int new_face = textures_find_by_name(m_textures, MAX_TEXTURES, "FACE");
+                if (new_face >= 0) m_textures[face_tex_id] = m_textures[new_face];
+            }
+        }
+    }
 }
 
 int flevel_is_in_warm_light(Vec4 position)
@@ -261,9 +316,22 @@ int flevel_is_in_warm_light(Vec4 position)
 
 void flevel_update(void)
 {
-    // Level specific update logic (e.g., hot-swapping wall textures based on Loyalty/Doubt)
-    // Managed externally via game state transitions, calling level_swap_wall_texture
-    // TODO: Manage WARM vs COLD lighting logic based on spatial zones
+    // Track WARM vs COLD lighting logic based on spatial zones
+    static int light_timer = 0;
+    light_timer++;
+    
+    if (light_timer >= 150) // Every 5 seconds (assuming 30fps)
+    {
+        light_timer = 0;
+        if (flevel_is_in_warm_light(g_player.w_pos))
+        {
+            g_loyalty++;
+        }
+        else
+        {
+            g_doubt++;
+        }
+    }
 }
 
 void flevel_draw(Camera *cam, Surface8 *surf, const ClipRect *clip_rect)

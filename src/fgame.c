@@ -9,6 +9,9 @@ int g_loyalty = 0;
 int g_doubt = 0;
 int g_ammo = 10;
 int g_health = 100;
+int g_ending = 0;
+int g_mission_progress = 1;
+int g_boxer_dead = 0;
 
 void fgame_init(void)
 {
@@ -19,8 +22,12 @@ void fgame_init(void)
     g_doubt = 0;
     g_ammo = 10; // Starting ammo
     g_health = 100;
-    
+    g_ending = 0;
+    g_mission_progress = 1;
+    g_boxer_dead = 0;
+
     // Ensure the level loads when skipping the title screen
+    flevel_init();
     fgame_load_level(LEVEL_HUB);
 }
 
@@ -36,7 +43,7 @@ void fgame_load_level(LevelID level)
         flevel_load("ASSTS\\WORLD\\MAP01.CWR");
         break;
     case LEVEL_MISSION2:
-        flevel_load("ASSTS\\WORLD\\MAP02.CWR"); // Assuming this will be the naming scheme
+        flevel_load("ASSTS\\WORLD\\MAP02.CWR");
         break;
     case LEVEL_MISSION3:
         flevel_load("ASSTS\\WORLD\\MAP03.CWR");

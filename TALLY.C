@@ -103,8 +103,6 @@ int main(int argc, char **argv)
     cv_io_keyboard_init();
     cv_io_mouse_init(SCREEN_W, SCREEN_H, CV_MOUSE_MODE_MOUSELOOK);
 
-    flevel_init();
-
     while (!loopdone)
     {
 

@@ -86,7 +86,7 @@ void fentity_update(void)
                 // Attack logic here (reduce g_health)
                 if (g_clock.frame % 30 == 0)
                 {
-                    // g_health -= 5;
+                    g_health -= 5;
                 }
                 if (dist_to_player > FX_FROM_FLOAT(2.0f))
                 {
@@ -99,8 +99,13 @@ void fentity_update(void)
             // Ally follow behavior
             if (e->state == STATE_IDLE)
             {
+                // Trigger betrayal if doubt is high enough
+                if (g_doubt >= 2)
+                {
+                    e->state = STATE_BETRAYAL;
+                }
                 // Follow player if further than 3 units
-                if (dist_to_player > FX_FROM_INT(3) && dist_to_player < FX_FROM_INT(12))
+                else if (dist_to_player > FX_FROM_INT(3) && dist_to_player < FX_FROM_INT(12))
                 {
                     Vec4 dir;
                     vec4_sub(&g_player.w_pos, &e->pos, &dir);
@@ -124,6 +129,13 @@ void fentity_update(void)
                     e->pos.x += fx_mul_q16(dir.x, fx_mul_q16(e->speed, dt));
                     e->pos.z += fx_mul_q16(dir.z, fx_mul_q16(e->speed, dt));
                 }
+                else
+                {
+                    if (g_clock.frame % 30 == 0)
+                    {
+                        g_health -= 5;
+                    }
+                }
             }
             break;
 
@@ -132,7 +144,71 @@ void fentity_update(void)
             break;
 
         case ENT_TYPE_RADIO:
-            // Static
+        case ENT_TYPE_VAN:
+        case ENT_TYPE_FACE:
+        case ENT_TYPE_EXTRACTION:
+            // Static, handled by interactions
+            break;
+
+        case ENT_TYPE_MEDKIT:
+            // Medkit trap logic
+            if (dist_to_player < FX_FROM_FLOAT(1.5f))
+            {
+                if (g_loyalty >= 2)
+                {
+                    // It's a trap, spawn an enforcer
+                    fentity_spawn(ENT_TYPE_ENFORCER, e->pos);
+                }
+                else
+                {
+                    // Normal medkit
+                    g_health += 25;
+                    if (g_health > 100) g_health = 100;
+                }
+                e->active = 0; // Despawn
+            }
+            break;
+
+        case ENT_TYPE_PROJECTILE:
+            // Move projectile forward
+            {
+                i32 dt = g_clock.dt;
+                // Use rot as direction vector (already normalized when spawned)
+                e->pos.x += fx_mul_q16(e->rot.x, fx_mul_q16(e->speed, dt));
+                e->pos.y += fx_mul_q16(e->rot.y, fx_mul_q16(e->speed, dt));
+                e->pos.z += fx_mul_q16(e->rot.z, fx_mul_q16(e->speed, dt));
+
+                e->timer += dt;
+                if (e->timer > FX_FROM_INT(2)) // 2 seconds lifetime
+                {
+                    e->active = 0;
+                }
+                else
+                {
+                    // Check collision with enemies
+                    for (int j = 0; j < MAX_ENTITIES_T; j++)
+                    {
+                        if (i == j || !g_entities[j].active) continue;
+                        FEntity *other = &g_entities[j];
+                        
+                        if (other->type == ENT_TYPE_ENFORCER || other->type == ENT_TYPE_UNIT4 || other->type == ENT_TYPE_BOXER)
+                        {
+                            i32 dist = vec4_dist(&e->pos, &other->pos);
+                            if (dist < FX_FROM_FLOAT(1.0f))
+                            {
+                                other->health -= 34; // 3 shots to kill
+                                if (other->health <= 0)
+                                {
+                                    other->active = 0;
+                                    if (other->type == ENT_TYPE_BOXER) g_boxer_dead = 1;
+                                }
+                                e->active = 0;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
             break;
         }
     }
