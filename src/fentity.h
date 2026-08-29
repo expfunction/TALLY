@@ -19,7 +19,9 @@ typedef enum
     ENT_TYPE_FACE,
     ENT_TYPE_EXTRACTION,
     ENT_TYPE_PROJECTILE,
-    ENT_TYPE_RATHOLE
+    ENT_TYPE_RATHOLE,
+    ENT_TYPE_DOOR,
+    ENT_TYPE_DOOR_LOCKED
 } FEntityType;
 
 typedef enum
@@ -29,7 +31,9 @@ typedef enum
     STATE_CHASE,
     STATE_ATTACK,
     STATE_HIT,
-    STATE_BETRAYAL // Unit 4 specific
+    STATE_BETRAYAL, // Unit 4 specific
+    STATE_CLOSED,
+    STATE_OPEN
 } FEntityState;
 
 typedef struct
