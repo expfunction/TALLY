@@ -81,7 +81,7 @@ void fai_update_map(const char *grid)
         {
             // Define static obstacles
             int is_obstacle = 0;
-            if (c == '#' || c == '/' || c == '~' || c == '=' || c == '%' || c == '^' || c == ':')
+            if (c == '#' || c == '/' || c == '$' || c == '~' || c == '=' || c == '%' || c == '^' || c == ':')
             {
                 is_obstacle = 1;
             }
@@ -94,6 +94,15 @@ void fai_update_map(const char *grid)
             x = 0;
             y++;
         }
+    }
+}
+
+void fai_set_obstacle(int x, int y, int is_obstacle)
+{
+    if (x >= 0 && x < MAP_WIDTH && y >= 0 && y < MAP_HEIGHT)
+    {
+        g_map_grid[y * MAP_WIDTH + x] = is_obstacle;
+        s_nodes[y][x].is_obstacle = is_obstacle;
     }
 }
 

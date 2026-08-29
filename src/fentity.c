@@ -5,22 +5,43 @@
 #include "fplayr.h"
 #include "CORE/MTEXTUR.H"
 #include "RNDR/SPRIT.H"
+#include "MESH/CMS.H"
+#include "RNDR/TRIMES.H"
 #include <math.h>
 #include <string.h>
+#include <stdlib.h>
 #include "fai.h"
 
 #define MAX_ENTITIES_T 128
 
+typedef struct {
+    FEntity *e;
+    i32 dist;
+} FEntitySortNode;
+
+static int compare_entity_dist(const void *a, const void *b)
+{
+    FEntitySortNode *na = (FEntitySortNode *)a;
+    FEntitySortNode *nb = (FEntitySortNode *)b;
+    if (na->dist < nb->dist) return 1;
+    if (na->dist > nb->dist) return -1;
+    return 0;
+}
+
 static FEntity g_entities[MAX_ENTITIES_T];
+static MeshCMS g_door_mesh_x;
+static MeshCMS g_door_mesh_z;
+static MeshCMS g_doorl_mesh_x;
+static MeshCMS g_doorl_mesh_z;
 
 static void fentity_chase_player_astar(FEntity *e)
 {
-    int e_x = FX_TO_INT(e->pos.x + FX_FROM_FLOAT(0.5f));
-    int e_z = FX_TO_INT(e->pos.z + FX_FROM_FLOAT(0.5f));
-    int p_x = FX_TO_INT(g_player.w_pos.x + FX_FROM_FLOAT(0.5f));
-    int p_z = FX_TO_INT(g_player.w_pos.z + FX_FROM_FLOAT(0.5f));
+    int e_x = (int)(FX_TO_FLOAT(e->pos.x) / 2.0f + 0.5f);
+    int e_y = (int)(FX_TO_FLOAT(e->pos.z) / 2.0f + 0.5f);
+    int p_x = (int)(FX_TO_FLOAT(g_player.w_pos.x) / 2.0f + 0.5f);
+    int p_y = (int)(FX_TO_FLOAT(g_player.w_pos.z) / 2.0f + 0.5f);
 
-    Node *goal = fai_find_path(e_x, e_z, p_x, p_z);
+    Node *goal = fai_find_path(e_x, e_y, p_x, p_y);
     if (goal)
     {
         Node *next = goal;
@@ -31,9 +52,9 @@ static void fentity_chase_player_astar(FEntity *e)
         }
 
         Vec4 target;
-        target.x = FX_FROM_INT(next->x);
+        target.x = FX_FROM_INT(next->x * 2);
         target.y = e->pos.y;
-        target.z = FX_FROM_INT(next->y); // Node->y maps to world Z
+        target.z = FX_FROM_INT(next->y * 2);
         target.w = FX_ONE;
 
         Vec4 dir;
@@ -105,9 +126,29 @@ void fentity_init(void)
             m_textures[mslot].path = strdup("MPLSHT.RAW");
         }
     }
+
+    if (load_cms("ASSTS\\MESH\\DOOR\\DOOR.CMS", &g_door_mesh_x))
+    {
+        load_mesh_textures("ASSTS\\MESH\\DOOR\\DOOR.CMS", &g_door_mesh_x);
+    }
+    if (load_cms("ASSTS\\MESH\\DOOR\\DOOR.CMS", &g_door_mesh_z))
+    {
+        load_mesh_textures("ASSTS\\MESH\\DOOR\\DOOR.CMS", &g_door_mesh_z);
+        trimes_rotate(&g_door_mesh_z, 0, FX_FROM_FLOAT(1.570796f), 0);
+    }
+
+    if (load_cms("ASSTS\\MESH\\DOOR\\DOORL.CMS", &g_doorl_mesh_x))
+    {
+        load_mesh_textures("ASSTS\\MESH\\DOOR\\DOORL.CMS", &g_doorl_mesh_x);
+    }
+    if (load_cms("ASSTS\\MESH\\DOOR\\DOORL.CMS", &g_doorl_mesh_z))
+    {
+        load_mesh_textures("ASSTS\\MESH\\DOOR\\DOORL.CMS", &g_doorl_mesh_z);
+        trimes_rotate(&g_doorl_mesh_z, 0, FX_FROM_FLOAT(1.570796f), 0);
+    }
 }
 
-void fentity_spawn(FEntityType type, Vec4 pos)
+FEntity *fentity_spawn(FEntityType type, Vec4 pos)
 {
     for (int i = 0; i < MAX_ENTITIES_T; i++)
     {
@@ -116,14 +157,18 @@ void fentity_spawn(FEntityType type, Vec4 pos)
             g_entities[i].active = 1;
             g_entities[i].id = i;
             g_entities[i].type = type;
-            g_entities[i].state = STATE_IDLE;
+            g_entities[i].state = (type == ENT_TYPE_DOOR || type == ENT_TYPE_DOOR_LOCKED) ? STATE_CLOSED : STATE_IDLE;
             g_entities[i].pos = pos;
+            g_entities[i].rot.x = 0;
+            g_entities[i].rot.y = 0;
+            g_entities[i].rot.z = 0;
             g_entities[i].health = 100;
             g_entities[i].speed = FX_FROM_FLOAT(2.0f);
             g_entities[i].timer = 0;
-            break;
+            return &g_entities[i];
         }
     }
+    return NULL;
 }
 
 FEntity *fentity_get_all(void)
@@ -275,7 +320,7 @@ void fentity_update(void)
                         if (other->type == ENT_TYPE_ENFORCER_F || other->type == ENT_TYPE_UNIT4 || other->type == ENT_TYPE_BOXER)
                         {
                             i32 dist = vec4_dist(&e->pos, &other->pos);
-                            if (dist < FX_FROM_FLOAT(1.0f))
+                            if (dist < FX_ONE)
                             {
                                 other->health -= 34; // 3 shots to kill
                                 if (other->health <= 0)
@@ -389,26 +434,63 @@ static void get_enforcer_uv(FEntity *e, const Camera *cam, int *su, int *sv, int
 
 void fentity_draw(Camera *cam, Surface8 *surf, const ClipRect *clip_rect)
 {
-    // Render entities as billboards in CyberVGA
+    FEntitySortNode sort_nodes[MAX_ENTITIES_T];
+    int sort_count = 0;
+
     for (int i = 0; i < MAX_ENTITIES_T; i++)
     {
         if (!g_entities[i].active)
             continue;
+        
+        sort_nodes[sort_count].e = &g_entities[i];
+        sort_nodes[sort_count].dist = vec4_dist(&g_entities[i].pos, &cam->position);
+        sort_count++;
+    }
 
-        FEntity *e = &g_entities[i];
+    qsort(sort_nodes, sort_count, sizeof(FEntitySortNode), compare_entity_dist);
+
+    // Render entities as billboards in CyberVGA
+    for (int i = 0; i < sort_count; i++)
+    {
+        FEntity *e = sort_nodes[i].e;
+
+        if (e->type == ENT_TYPE_DOOR || e->type == ENT_TYPE_DOOR_LOCKED)
+        {
+            if (e->state == STATE_CLOSED)
+            {
+                MeshCMS *m = NULL;
+                if (e->type == ENT_TYPE_DOOR_LOCKED)
+                {
+                    m = (e->rot.y != 0) ? &g_doorl_mesh_z : &g_doorl_mesh_x;
+                }
+                else
+                {
+                    m = (e->rot.y != 0) ? &g_door_mesh_z : &g_door_mesh_x;
+                }
+
+                if (m && m->vertex_count > 0)
+                {
+                    ClipSpans spans;
+                    clipspans_from_cliprect(clip_rect, &spans);
+                    draw_trimes_tex(m, cam, surf, &e->pos, g_world.num_pointLights, g_world.pointLights, NULL, &spans);
+                }
+            }
+            continue;
+        }
+
         Sprite *spr = get_sprite_for_entity(e->type);
 
         if (spr && spr->pix)
         {
             // Assume entities are roughly 1x2 or 1x1 units in world space
-            i32 w = FX_FROM_FLOAT(1.0f);
-            i32 h = (e->type == ENT_TYPE_RADIO) ? FX_FROM_FLOAT(0.5f) : FX_FROM_FLOAT(1.0f);
+            i32 w = FX_ONE;
+            i32 h = (e->type == ENT_TYPE_RADIO) ? FX_FROM_FLOAT(0.5f) : FX_ONE;
 
             if (e->type == ENT_TYPE_ENFORCER_F || e->type == ENT_TYPE_ENFORCER_M)
             {
                 int su, sv, sw, sh;
                 get_enforcer_uv(e, cam, &su, &sv, &sw, &sh);
-
+                w = h = FX_TWO;
                 draw_sprite_billboard_sub(
                     surf->back,
                     &e->pos,

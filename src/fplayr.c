@@ -5,13 +5,14 @@
 #include "RNDR/CAMER.H"
 #include "PHYS/PHYS.H"
 #include "CORE/CYBER.H"
+#include "fai.h"
 
 FPlayer g_player;
 
 void fplayer_init(void)
 {
     g_player.w_pos.x = 0;
-    g_player.w_pos.y = FX_FROM_FLOAT(0.5f); // Start a bit above ground
+    g_player.w_pos.y = FX_ONE; // Start a bit above ground
     g_player.w_pos.z = 0;
     g_player.w_pos.w = FX_ONE;
     g_player.w_rot.x = 0; // pitch
@@ -21,7 +22,7 @@ void fplayer_init(void)
 void fplayer_set_start_pos(Vec4 pos)
 {
     g_player.w_pos = pos;
-    g_player.w_pos.y = FX_FROM_FLOAT(0.5f);
+    g_player.w_pos.y = FX_ONE;
 }
 
 void fplayer_update(Camera *cam)
@@ -80,18 +81,49 @@ void fplayer_update(Camera *cam)
     phys_collide_camera(cam, &g_world);
     g_player.w_pos = cam->position; // Update back player position if pushed
 
-    // Interaction check
-    if (cv_io_key_pressed_now(KEY_E))
+    // Check collision against closed doors
+    FEntity *ents = fentity_get_all();
+    for (int i = 0; i < 128; i++)
     {
+        if (ents[i].active && (ents[i].type == ENT_TYPE_DOOR || ents[i].type == ENT_TYPE_DOOR_LOCKED) && ents[i].state == STATE_CLOSED)
+        {
+            i32 dist = vec4_dist(&g_player.w_pos, &ents[i].pos);
+            i32 door_radius = FX_FROM_FLOAT(1.2f); // Door is 2x2, so radius ~1.0 + player radius
+            if (dist < door_radius && dist > 0)
+            {
+                Vec4 push_dir;
+                vec4_sub(&g_player.w_pos, &ents[i].pos, &push_dir);
+                push_dir.y = 0;
+                vec4_normalize3(&push_dir, &push_dir);
+
+                i32 overlap = door_radius - dist;
+                g_player.w_pos.x += fx_mul_q16(push_dir.x, overlap);
+                g_player.w_pos.z += fx_mul_q16(push_dir.z, overlap);
+                cam->position = g_player.w_pos;
+            }
+        }
+    }
+
+    // Interaction check (manual debounce with cooldown to prevent spamming)
+    static int e_cooldown = 0;
+    if (e_cooldown > 0)
+        e_cooldown--;
+
+    int e_is_down = cv_io_key_down(KEY_E);
+
+    if (e_is_down && e_cooldown == 0)
+    {
+        e_cooldown = 20; // 20 frames cooldown (~0.33s at 60fps)
         // Simple raycast for interaction
         FEntity *ents = fentity_get_all();
+        console_log("E hit");
         for (int i = 0; i < 128; i++)
         {
             if (!ents[i].active)
                 continue;
 
             i32 dist = vec4_dist(&g_player.w_pos, &ents[i].pos);
-            if (dist < FX_FROM_FLOAT(2.5f))
+            if (dist < FX_FROM_FLOAT(3.0f))
             {
                 if (ents[i].type == ENT_TYPE_EXTRACTION)
                 {
@@ -111,6 +143,24 @@ void fplayer_update(Camera *cam)
                     }
                     // Prevent multiple triggers
                     g_player.w_pos.x += FX_FROM_FLOAT(5.0f);
+                    break;
+                }
+                else if (ents[i].type == ENT_TYPE_DOOR)
+                {
+                    console_log("door hit");
+                    if (ents[i].state == STATE_CLOSED)
+                    {
+                        console_log("door closed");
+                        ents[i].state = STATE_OPEN;
+                        fai_set_obstacle((int)(FX_TO_FLOAT(ents[i].pos.x) / 2.0f + 0.5f),
+                                         (int)(FX_TO_FLOAT(ents[i].pos.z) / 2.0f + 0.5f), 0);
+                        // Also clear the neighbors if the door spans multiple tiles, but 1 tile is enough for standard A* if it's 1x1 obstacle.
+                    }
+                    break;
+                }
+                else if (ents[i].type == ENT_TYPE_DOOR_LOCKED)
+                {
+                    // Locked door, does not open for now
                     break;
                 }
                 else if (ents[i].type == ENT_TYPE_RADIO)

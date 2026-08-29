@@ -164,4 +164,9 @@ void ui_draw(void)
             }
         }
     }
+
+    static u8 txx[32];
+    sprintf(txx, "Plyr:%3.2f %3.2f %3.2f", FX_TO_FLOAT(g_player.w_pos.x),
+            FX_TO_FLOAT(g_player.w_pos.y), FX_TO_FLOAT(g_player.w_pos.z));
+    draw_text(back, 100, 210, txx, BASIC_8, 255, -1);
 }

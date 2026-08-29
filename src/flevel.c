@@ -13,9 +13,9 @@
 const char *MAP_BARRACKS =
     "########################"
     "#..E.m...######..E.m...#"
-    "#........##==##........#"
+    "#........##..##........#"
     "#....B...##FF##...B....#"
-    "#........##==##........#"
+    "#........##..##........#"
     "#......................#"
     "#.........!!!!.........#"
     "#......................#"
@@ -26,14 +26,14 @@ const char *MAP_BARRACKS =
     "#~~~~.....+......::::..#"
     "#~~~~............::::..#"
     "####/##############^####"
-    "#E.......#.............#"
+    "#........#.............#"
     "#...P..../.............#"
     "#........#....S........#"
-    "####$#####.............#"
+    "####/#####.............#"
     "#........#.............#"
     "#........#.............#"
     "#........#.............#"
-    "#........#.............#"
+    "#....E...#.............#"
     "########################";
 
 const char *MAP_RATIONBLOCK =
@@ -109,12 +109,12 @@ void flevel_spawn_entities_from_grid(const char *grid, const char *mapName)
         if (c == '\n' || c == '\r')
             continue;
 
-        // Calculate world position based on grid (assuming each tile is 1 world unit, i.e., FX_ONE)
-        // or whatever CyberVGA's scale is. Usually 1.0 or 2.0. Let's assume 1.0
+        // Calculate world position based on grid. Tile size is 2.0 world units.
+        // Map should be generated at +Z (Blender -Y).
         Vec4 pos;
-        pos.x = FX_FROM_INT(col);
-        pos.y = 0; // Ground level
-        pos.z = FX_FROM_INT(row);
+        pos.x = FX_FROM_INT(col * 2);
+        pos.y = FX_ONE; // Ground level for sprites
+        pos.z = FX_FROM_INT(row * 2);
         pos.w = FX_ONE;
 
         switch (c)
@@ -150,6 +150,37 @@ void flevel_spawn_entities_from_grid(const char *grid, const char *mapName)
         case 'V':
             fentity_spawn(ENT_TYPE_VAN, pos);
             break;
+        case '/':
+        case '$':
+        {
+            FEntity *door = fentity_spawn((c == '$') ? ENT_TYPE_DOOR_LOCKED : ENT_TYPE_DOOR, pos);
+            if (door)
+            {
+                // Door mesh is centered at its origin (Z=0 in Blender, Y=0 in CVGA).
+                door->pos.y = 0;
+
+                // Check if passage is vertical or horizontal
+                // grid is 24x24 (1d array)
+                int left_idx = (row * 24) + (col - 1);
+                int right_idx = (row * 24) + (col + 1);
+                int is_horizontal_wall = 0;
+
+                if (col > 0 && col < 23)
+                {
+                    if (grid[left_idx] == '#' || grid[right_idx] == '#')
+                        is_horizontal_wall = 1;
+                }
+
+                // If horizontal wall, the passage goes Z (up/down). Door spans X.
+                // Since door mesh is on X axis, rotation is 0.
+                // If vertical wall, passage goes X (left/right). Door spans Z.
+                if (!is_horizontal_wall)
+                {
+                    door->rot.y = FX_FROM_FLOAT(1.570796f); // pi/2
+                }
+            }
+            break;
+        }
         case 'M':
             fentity_spawn(ENT_TYPE_MEDKIT, pos);
             break;
@@ -166,7 +197,6 @@ void flevel_spawn_entities_from_grid(const char *grid, const char *mapName)
         case 'C':
         case 'H':
         case 'N':
-        case '$':
         case 'e':
         case 't':
         case 'r':
