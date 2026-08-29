@@ -46,7 +46,7 @@ void draw_sprite(u8 *buf, i32 x, i32 y, const Sprite *s);
 void draw_sprite_scaled(u8 *buf, int cx, int cy, int dw, int dh,
                         const Sprite *s, int color_key,
                         int light_level, int fog_level,
-                        const ClipRect *clip);
+                        const ClipRect *clip, u32 oow);
 
 /**
  * @brief               Draw a billboard sprite in 3D: always faces camera.
@@ -71,7 +71,7 @@ void draw_sprite_billboard(u8 *buf, const Vec4 *world_pos,
 void draw_sprite_scaled_sub(u8 *buf, int cx, int cy, int dw, int dh,
                             const Sprite *s, int su, int sv, int sw, int sh,
                             int color_key, int light_level, int fog_level,
-                            const ClipRect *clip);
+                            const ClipRect *clip, u32 oow);
 
 void draw_sprite_billboard_sub(u8 *buf, const Vec4 *world_pos,
                                i32 world_w, i32 world_h,

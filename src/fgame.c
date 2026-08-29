@@ -73,7 +73,7 @@ void fgame_update(void)
     if (g_state == STATE_TITLE)
     {
         // Pressing Enter starts the game
-        if (cv_io_key_pressed_now(KEY_ENTER))
+        if (cv_io_key_down(KEY_ENTER))
         {
             g_state = STATE_PLAYING;
             fgame_load_level(LEVEL_BARRACKS);

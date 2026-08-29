@@ -14,7 +14,8 @@
 
 #define MAX_ENTITIES_T 128
 
-typedef struct {
+typedef struct
+{
     FEntity *e;
     i32 dist;
 } FEntitySortNode;
@@ -23,8 +24,10 @@ static int compare_entity_dist(const void *a, const void *b)
 {
     FEntitySortNode *na = (FEntitySortNode *)a;
     FEntitySortNode *nb = (FEntitySortNode *)b;
-    if (na->dist < nb->dist) return 1;
-    if (na->dist > nb->dist) return -1;
+    if (na->dist < nb->dist)
+        return 1;
+    if (na->dist > nb->dist)
+        return -1;
     return 0;
 }
 
@@ -408,17 +411,17 @@ static void get_enforcer_uv(FEntity *e, const Camera *cam, int *su, int *sv, int
     }
     else if (e->state == STATE_CHASE)
     {
-        int anim_frame = (g_clock.frame / 10) % 4;
+        int anim_frame = (g_clock.frame / 20) % 4;
         frame_row = anim_frame;
     }
     else if (e->state == STATE_ATTACK)
     {
-        int anim_frame = (g_clock.frame / 5) % 2;
+        int anim_frame = (g_clock.frame / 40) % 2;
         frame_row = 4 + anim_frame;
     }
     else if (e->state == STATE_HIT)
     {
-        int anim_frame = (e->timer / 5) % 2; // Hit 1 or 2
+        int anim_frame = (g_clock.frame / 40) % 2; // Hit 1 or 2
         frame_row = 6 + anim_frame;
     }
     else
@@ -441,7 +444,7 @@ void fentity_draw(Camera *cam, Surface8 *surf, const ClipRect *clip_rect)
     {
         if (!g_entities[i].active)
             continue;
-        
+
         sort_nodes[sort_count].e = &g_entities[i];
         sort_nodes[sort_count].dist = vec4_dist(&g_entities[i].pos, &cam->position);
         sort_count++;
