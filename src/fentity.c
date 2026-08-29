@@ -7,10 +7,61 @@
 #include "RNDR/SPRIT.H"
 #include <math.h>
 #include <string.h>
+#include "fai.h"
 
 #define MAX_ENTITIES_T 128
 
 static FEntity g_entities[MAX_ENTITIES_T];
+
+static void fentity_chase_player_astar(FEntity *e)
+{
+    int e_x = FX_TO_INT(e->pos.x + FX_FROM_FLOAT(0.5f));
+    int e_z = FX_TO_INT(e->pos.z + FX_FROM_FLOAT(0.5f));
+    int p_x = FX_TO_INT(g_player.w_pos.x + FX_FROM_FLOAT(0.5f));
+    int p_z = FX_TO_INT(g_player.w_pos.z + FX_FROM_FLOAT(0.5f));
+
+    Node *goal = fai_find_path(e_x, e_z, p_x, p_z);
+    if (goal)
+    {
+        Node *next = goal;
+        // Backtrack to find the node immediately following the start node
+        while (next->parent != NULL && next->parent->parent != NULL)
+        {
+            next = next->parent;
+        }
+
+        Vec4 target;
+        target.x = FX_FROM_INT(next->x);
+        target.y = e->pos.y;
+        target.z = FX_FROM_INT(next->y); // Node->y maps to world Z
+        target.w = FX_ONE;
+
+        Vec4 dir;
+        vec4_sub(&target, &e->pos, &dir);
+
+        // Prevent moving completely erratic when on top of the tile center
+        i32 dist_to_target = vec4_dist(&target, &e->pos);
+        if (dist_to_target > FX_FROM_FLOAT(0.01f))
+        {
+            vec4_normalize3(&dir, &dir);
+
+            float dx = FX_TO_FLOAT(dir.x);
+            float dz = FX_TO_FLOAT(dir.z);
+            e->rot.y = FX_FROM_FLOAT(atan2f(dz, dx));
+
+            i32 dt = g_clock.dt;
+            e->pos.x += fx_mul_q16(dir.x, fx_mul_q16(e->speed, dt));
+            e->pos.z += fx_mul_q16(dir.z, fx_mul_q16(e->speed, dt));
+        }
+    }
+    else
+    {
+        if (g_clock.frame % 60 == 0)
+        {
+            console_log("No path found for entity ID %d\n", e->id);
+        }
+    }
+}
 
 void fentity_init(void)
 {
@@ -107,18 +158,7 @@ void fentity_update(void)
             {
                 if (dist_to_player > FX_FROM_FLOAT(1.5f))
                 {
-                    // Move towards player
-                    Vec4 dir;
-                    vec4_sub(&g_player.w_pos, &e->pos, &dir);
-                    vec4_normalize3(&dir, &dir);
-
-                    float dx = FX_TO_FLOAT(dir.x);
-                    float dz = FX_TO_FLOAT(dir.z);
-                    e->rot.y = FX_FROM_FLOAT(atan2f(dz, dx));
-
-                    i32 dt = g_clock.dt;
-                    e->pos.x += fx_mul_q16(dir.x, fx_mul_q16(e->speed, dt));
-                    e->pos.z += fx_mul_q16(dir.z, fx_mul_q16(e->speed, dt));
+                    fentity_chase_player_astar(e);
                 }
                 else
                 {
@@ -166,13 +206,7 @@ void fentity_update(void)
                 // Behaves exactly like an Enforcer now
                 if (dist_to_player > FX_FROM_FLOAT(1.5f))
                 {
-                    Vec4 dir;
-                    vec4_sub(&g_player.w_pos, &e->pos, &dir);
-                    vec4_normalize3(&dir, &dir);
-
-                    i32 dt = g_clock.dt;
-                    e->pos.x += fx_mul_q16(dir.x, fx_mul_q16(e->speed, dt));
-                    e->pos.z += fx_mul_q16(dir.z, fx_mul_q16(e->speed, dt));
+                    fentity_chase_player_astar(e);
                 }
                 else
                 {
