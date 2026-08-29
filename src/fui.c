@@ -131,7 +131,7 @@ void ui_draw(void)
         }
 
         // Enforcers are blue
-        if (ents[i].type == ENT_TYPE_ENFORCER)
+        if (ents[i].type == ENT_TYPE_ENFORCER_F)
         {
             gui_fill_rect(back, px - 1, py - 1, px + 1, py + 1, 32); // 32 = blueish
         }

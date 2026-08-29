@@ -3,6 +3,8 @@
 #include "fplayr.h"
 #include "CORE/MTEXTUR.H"
 #include "RNDR/SPRIT.H"
+#include <math.h>
+#include <string.h>
 
 #define MAX_ENTITIES_T 128
 
@@ -13,6 +15,42 @@ void fentity_init(void)
     for (int i = 0; i < MAX_ENTITIES_T; i++)
     {
         g_entities[i].active = 0;
+    }
+
+    int slot = -1;
+    for (int j = 0; j < MAX_TEXTURES; j++)
+    {
+        if (!m_textures[j].pix)
+        {
+            slot = j;
+            break;
+        }
+    }
+    if (slot >= 0)
+    {
+        if (load_sprite(&m_textures[slot], (const u8 *)"ASSTS\\TEXTR\\CHAR\\FPLSHT.RAW", 1024, 896))
+        {
+            m_textures[slot].name = (u8 *)strdup("FPLSHT.RAW");
+            m_textures[slot].path = strdup("FPLSHT.RAW");
+        }
+    }
+
+    int mslot = -1;
+    for (int j = 0; j < MAX_TEXTURES; j++)
+    {
+        if (!m_textures[j].pix)
+        {
+            mslot = j;
+            break;
+        }
+    }
+    if (mslot >= 0)
+    {
+        if (load_sprite(&m_textures[mslot], (const u8 *)"ASSTS\\TEXTR\\CHAR\\MPLSHT.RAW", 1024, 896))
+        {
+            m_textures[mslot].name = (u8 *)strdup("MPLSHT.RAW");
+            m_textures[mslot].path = strdup("MPLSHT.RAW");
+        }
     }
 }
 
@@ -53,7 +91,8 @@ void fentity_update(void)
 
         switch (e->type)
         {
-        case ENT_TYPE_ENFORCER:
+        case ENT_TYPE_ENFORCER_F:
+        case ENT_TYPE_ENFORCER_M:
             if (e->state == STATE_IDLE)
             {
                 // Look at player distance. If close enough, chase!
@@ -70,6 +109,10 @@ void fentity_update(void)
                     Vec4 dir;
                     vec4_sub(&g_player.w_pos, &e->pos, &dir);
                     vec4_normalize3(&dir, &dir);
+
+                    float dx = FX_TO_FLOAT(dir.x);
+                    float dz = FX_TO_FLOAT(dir.z);
+                    e->rot.y = FX_FROM_FLOAT(atan2f(dz, dx));
 
                     i32 dt = g_clock.dt;
                     e->pos.x += fx_mul_q16(dir.x, fx_mul_q16(e->speed, dt));
@@ -157,13 +200,14 @@ void fentity_update(void)
                 if (g_loyalty >= 2)
                 {
                     // It's a trap, spawn an enforcer
-                    fentity_spawn(ENT_TYPE_ENFORCER, e->pos);
+                    fentity_spawn(ENT_TYPE_ENFORCER_F, e->pos);
                 }
                 else
                 {
                     // Normal medkit
                     g_health += 25;
-                    if (g_health > 100) g_health = 100;
+                    if (g_health > 100)
+                        g_health = 100;
                 }
                 e->active = 0; // Despawn
             }
@@ -188,10 +232,11 @@ void fentity_update(void)
                     // Check collision with enemies
                     for (int j = 0; j < MAX_ENTITIES_T; j++)
                     {
-                        if (i == j || !g_entities[j].active) continue;
+                        if (i == j || !g_entities[j].active)
+                            continue;
                         FEntity *other = &g_entities[j];
-                        
-                        if (other->type == ENT_TYPE_ENFORCER || other->type == ENT_TYPE_UNIT4 || other->type == ENT_TYPE_BOXER)
+
+                        if (other->type == ENT_TYPE_ENFORCER_F || other->type == ENT_TYPE_UNIT4 || other->type == ENT_TYPE_BOXER)
                         {
                             i32 dist = vec4_dist(&e->pos, &other->pos);
                             if (dist < FX_FROM_FLOAT(1.0f))
@@ -200,7 +245,8 @@ void fentity_update(void)
                                 if (other->health <= 0)
                                 {
                                     other->active = 0;
-                                    if (other->type == ENT_TYPE_BOXER) g_boxer_dead = 1;
+                                    if (other->type == ENT_TYPE_BOXER)
+                                        g_boxer_dead = 1;
                                 }
                                 e->active = 0;
                                 break;
@@ -219,8 +265,11 @@ static Sprite *get_sprite_for_entity(FEntityType type)
     const char *tex_name = 0x0;
     switch (type)
     {
-    case ENT_TYPE_ENFORCER:
-        tex_name = "ENFORCER";
+    case ENT_TYPE_ENFORCER_F:
+        tex_name = "FPLSHT.RAW";
+        break;
+    case ENT_TYPE_ENFORCER_M:
+        tex_name = "MPLSHT.RAW";
         break;
     case ENT_TYPE_UNIT4:
         tex_name = "UNIT4";
@@ -252,6 +301,56 @@ static Sprite *get_sprite_for_entity(FEntityType type)
     return 0x0;
 }
 
+static void get_enforcer_uv(FEntity *e, const Camera *cam, int *su, int *sv, int *sw, int *sh)
+{
+    float dx = FX_TO_FLOAT(cam->position.x - e->pos.x);
+    float dz = FX_TO_FLOAT(cam->position.z - e->pos.z);
+    float angle_to_cam = atan2f(dz, dx);
+    float facing = FX_TO_FLOAT(e->rot.y);
+    float relative = facing - angle_to_cam;
+    float PI2 = 6.28318530718f;
+
+    while (relative < 0.0f)
+        relative += PI2;
+    while (relative >= PI2)
+        relative -= PI2;
+
+    int angle_idx = (int)((relative + (3.14159265f / 8.0f)) / (3.14159265f / 4.0f)) % 8;
+    if (angle_idx < 0)
+        angle_idx += 8;
+
+    int frame_row = 0;
+
+    if (e->state == STATE_IDLE)
+    {
+        frame_row = 0;
+    }
+    else if (e->state == STATE_CHASE)
+    {
+        int anim_frame = (g_clock.frame / 10) % 4;
+        frame_row = anim_frame;
+    }
+    else if (e->state == STATE_ATTACK)
+    {
+        int anim_frame = (g_clock.frame / 5) % 2;
+        frame_row = 4 + anim_frame;
+    }
+    else if (e->state == STATE_HIT)
+    {
+        int anim_frame = (e->timer / 5) % 2; // Hit 1 or 2
+        frame_row = 6 + anim_frame;
+    }
+    else
+    {
+        frame_row = 0;
+    }
+
+    *su = angle_idx * 128;
+    *sv = frame_row * 128;
+    *sw = 128;
+    *sh = 128;
+}
+
 void fentity_draw(Camera *cam, Surface8 *surf, const ClipRect *clip_rect)
 {
     // Render entities as billboards in CyberVGA
@@ -267,19 +366,38 @@ void fentity_draw(Camera *cam, Surface8 *surf, const ClipRect *clip_rect)
         {
             // Assume entities are roughly 1x2 or 1x1 units in world space
             i32 w = FX_FROM_FLOAT(1.0f);
-            i32 h = (e->type == ENT_TYPE_RADIO) ? FX_FROM_FLOAT(0.5f) : FX_FROM_FLOAT(2.0f);
+            i32 h = (e->type == ENT_TYPE_RADIO) ? FX_FROM_FLOAT(0.5f) : FX_FROM_FLOAT(1.0f);
 
-            draw_sprite_billboard(
-                surf->back,
-                &e->pos,
-                w, h,
-                cam,
-                spr,
-                255, // color_key = magenta usually, assume 255
-                g_world.num_pointLights,
-                g_world.pointLights,
-                clip_rect // clip_rect (we'd need to pass the real clip rect if we wanted to clip to portals)
-            );
+            if (e->type == ENT_TYPE_ENFORCER_F || e->type == ENT_TYPE_ENFORCER_M)
+            {
+                int su, sv, sw, sh;
+                get_enforcer_uv(e, cam, &su, &sv, &sw, &sh);
+
+                draw_sprite_billboard_sub(
+                    surf->back,
+                    &e->pos,
+                    w, h,
+                    cam,
+                    spr,
+                    su, sv, sw, sh,
+                    255, // color_key
+                    g_world.num_pointLights,
+                    g_world.pointLights,
+                    clip_rect);
+            }
+            else
+            {
+                draw_sprite_billboard(
+                    surf->back,
+                    &e->pos,
+                    w, h,
+                    cam,
+                    spr,
+                    255, // color_key = 255 usually
+                    g_world.num_pointLights,
+                    g_world.pointLights,
+                    clip_rect);
+            }
         }
     }
 }

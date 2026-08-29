@@ -29,7 +29,7 @@ void fgame_init(void)
     g_loyalty = 0;
     g_doubt = 0;
     g_boxer_dead = 0;
-    
+
     g_record_kept = 0;
     g_access_card_given = 0;
     g_assume_control = 0;
@@ -38,6 +38,9 @@ void fgame_init(void)
     g_health = 100;
     g_ending = 0;
     g_mission_progress = 1;
+
+    // Init entities
+    fentity_init();
 
     // Ensure the level loads when skipping the title screen
     flevel_init();

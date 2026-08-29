@@ -68,4 +68,17 @@ void draw_sprite_billboard(u8 *buf, const Vec4 *world_pos,
                            int num_lights, const PointLight *lights,
                            const ClipRect *clip);
 
+void draw_sprite_scaled_sub(u8 *buf, int cx, int cy, int dw, int dh,
+                            const Sprite *s, int su, int sv, int sw, int sh,
+                            int color_key, int light_level, int fog_level,
+                            const ClipRect *clip);
+
+void draw_sprite_billboard_sub(u8 *buf, const Vec4 *world_pos,
+                               i32 world_w, i32 world_h,
+                               const Camera *cam, const Sprite *s,
+                               int su, int sv, int sw, int sh,
+                               int color_key,
+                               int num_lights, const PointLight *lights,
+                               const ClipRect *clip);
+
 #endif

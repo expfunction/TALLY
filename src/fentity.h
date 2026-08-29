@@ -3,9 +3,12 @@
 
 #include "CORE/CYBER.H"
 
+#define MAX_CHAR_SPRITES 64
+
 typedef enum
 {
-    ENT_TYPE_ENFORCER,
+    ENT_TYPE_ENFORCER_F, /* Female enforcer */
+    ENT_TYPE_ENFORCER_M, /* Male enforcer */
     ENT_TYPE_UNIT4,
     ENT_TYPE_BOXER,
     ENT_TYPE_RADIO,
@@ -23,6 +26,7 @@ typedef enum
     STATE_PATROL,
     STATE_CHASE,
     STATE_ATTACK,
+    STATE_HIT,
     STATE_BETRAYAL // Unit 4 specific
 } FEntityState;
 
@@ -42,8 +46,8 @@ typedef struct
     i32 speed;
     i32 timer; // Used for states/animations
 
-    // Sprite
-    int sprite_id;
+    // Sprite list
+    Sprite sheet[MAX_CHAR_SPRITES];
 } FEntity;
 
 void fentity_init(void);
