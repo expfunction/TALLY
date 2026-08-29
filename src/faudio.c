@@ -1,3 +1,5 @@
+/* Copyright (c) 2026 Burak Yazar */
+
 #include "faudio.h"
 
 void audio_init(void)

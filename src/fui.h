@@ -1,3 +1,5 @@
+/* Copyright (c) 2026 Burak Yazar */
+
 #ifndef FUI_H
 #define FUI_H
 

@@ -1,3 +1,5 @@
+/* Copyright (c) 2026 Burak Yazar */
+
 #ifndef FPLAYR_H
 #define FPLAYR_H
 

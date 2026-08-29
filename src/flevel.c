@@ -1,3 +1,5 @@
+/* Copyright (c) 2026 Burak Yazar */
+
 #include "flevel.h"
 #include <stdio.h>
 #include <string.h>
@@ -6,6 +8,7 @@
 #include "CORE/MTEXTUR.H"
 #include "fentity.h"
 #include "fplayr.h"
+#include "fai.h"
 
 const char *MAP_BARRACKS =
     "########################"
@@ -27,6 +30,7 @@ const char *MAP_BARRACKS =
     "#...P..../.............#"
     "#........#....S........#"
     "####$#####.............#"
+    "#........#.............#"
     "#........#.............#"
     "#........#.............#"
     "#........#.............#"
@@ -91,6 +95,9 @@ void flevel_init(void)
 
 void flevel_spawn_entities_from_grid(const char *grid, const char *mapName)
 {
+    // Keep AI map up to date with the newly loaded grid
+    fai_update_map(grid);
+
     // Iterate over 24x24 grid and spawn entities based on characters
     int row = 0;
     int col = 0;
@@ -198,6 +205,11 @@ void flevel_load(const char *mapName)
     // Now spawn entities from our ascii grid definitions
     if (strstr(mapName, "BARRACKS") || strstr(mapName, "HUB"))
     {
+        if (!fai_init_map(MAP_BARRACKS))
+        {
+            console_log("Error initializing Astar grid for BARRACKS");
+            return;
+        }
         flevel_spawn_entities_from_grid(MAP_BARRACKS, mapName);
     }
     else if (strstr(mapName, "RATION") || strstr(mapName, "MAP01") || strstr(mapName, "BLOCK"))

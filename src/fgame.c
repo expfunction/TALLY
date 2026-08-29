@@ -1,3 +1,5 @@
+/* Copyright (c) 2026 Burak Yazar */
+
 #include "fgame.h"
 #include "flevel.h"
 #include "IO/IO.H"
@@ -39,11 +41,12 @@ void fgame_init(void)
     g_ending = 0;
     g_mission_progress = 1;
 
-    // Init entities
+    // Init entity resources
     fentity_init();
 
     // Ensure the level loads when skipping the title screen
     flevel_init();
+
     fgame_load_level(LEVEL_BARRACKS);
 }
 

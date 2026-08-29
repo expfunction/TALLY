@@ -1,3 +1,5 @@
+/* Copyright (c) 2026 Burak Yazar */
+
 #ifndef FAUDIO_H
 #define FAUDIO_H
 

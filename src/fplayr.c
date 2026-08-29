@@ -1,3 +1,5 @@
+/* Copyright (c) 2026 Burak Yazar */
+
 #include "fplayr.h"
 #include "IO/IO.H"
 #include "RNDR/CAMER.H"

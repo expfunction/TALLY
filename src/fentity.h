@@ -1,3 +1,5 @@
+/* Copyright (c) 2026 Burak Yazar */
+
 #ifndef FENTITY_H
 #define FENTITY_H
 

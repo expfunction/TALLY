@@ -1,3 +1,5 @@
+/* Copyright (c) 2026 Burak Yazar */
+
 #ifndef FGAME_H
 #define FGAME_H
 

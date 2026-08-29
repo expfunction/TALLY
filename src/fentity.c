@@ -1,3 +1,5 @@
+/* Copyright (c) 2026 Burak Yazar */
+
 #include "fentity.h"
 #include "fgame.h"
 #include "fplayr.h"
