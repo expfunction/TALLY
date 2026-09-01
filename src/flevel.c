@@ -9,10 +9,12 @@
 #include "fentity.h"
 #include "fplayr.h"
 #include "fai.h"
+#include "fgame.h"
+#include "faudio.h"
 
 const char *MAP_BARRACKS =
     "########################"
-    "#..E.m...######..E.m...#"
+    "#........######........#"
     "#........##..##........#"
     "#....B...##FF##...B....#"
     "#........##..##........#"
@@ -20,29 +22,29 @@ const char *MAP_BARRACKS =
     "#.........!!!!.........#"
     "#......................#"
     "#####/############/#####"
-    "#.........+............#"
-    "#....T....+....G.......#"
-    "#.........+............#"
-    "#~~~~.....+......::::..#"
+    "#......................#"
+    "#....E.........m.......#"
+    "#......................#"
+    "#~~~~............::::..#"
     "#~~~~............::::..#"
     "####/##############^####"
     "#........#.............#"
-    "#...P..../.............#"
+    "#...P.4../.............#"
     "#........#....S........#"
     "####/#####.............#"
+    "#...A....#.............#"
     "#........#.............#"
     "#........#.............#"
     "#........#.............#"
-    "#....E...#.............#"
     "########################";
 
 const char *MAP_RATIONBLOCK =
     "########################"
     "#NNN:#NNN:#NNN:#....L.*#"
     "#W...#W...#W...#.......#"
-    "#....#....#....#.......#"
+    "#A...#....#....#.......#"
     "##/####/####/####*######"
-    "#..m...................#"
+    "#..E...................#"
     "#..~~~~....~~~~....Q...#"
     "#..~~~~....~~~~........#"
     "#..~~~~....~~~~........#"
@@ -54,38 +56,38 @@ const char *MAP_RATIONBLOCK =
     "#......................#"
     "#.....E.......m........#"
     "#......................#"
-    "########/#######+#######"
-    "#P.....#.......#..W!!!!#"
+    "####/######/####$#######"
+    "#...P..#.......#..W!!!!#"
     "#......#..M....#.......#"
     "#......#.......#.......#"
-    "#......#.......#...$...#"
+    "#......#.......#.......#"
     "#......#.......#.......#"
     "########################";
 
 const char *MAP_GENERATOR =
     "########################"
-    "#t*....#~~~~~~#....E...#"
-    "#......#~~~~~~#........#"
-    "#......#~~~~~~#........#"
-    "##/#####~~~~~~#####/####"
-    "#......................#"
-    "#..........LL..........#"
-    "#..........LL..........#"
-    "#..........ee..........#"
-    "#......................#"
-    "#....E............4....#"
-    "#......................#"
-    "####/##############/####"
-    "#P.....#........#%%%%%%#"
-    "#......#...B....#..O.O.#"
-    "#......#........#%%%%%%#"
-    "#......#....C...#!.....#"
-    "########/########/######"
-    "#~~~~~~#........#~~~~~~#"
-    "#~~~~~~#...V....#~~~~~~#"
-    "#~~~~~~#...e....#~~~~~~#"
-    "#......#........#......#"
-    "#..$...#........#......#"
+    "##r....##~~~~~##...E...#"
+    "##.....##~~~~~##.......#"
+    "##.....##~~~~~##.......#"
+    "###/#####~~~~~#####/####"
+    "###.###############.####"
+    "##.....................#"
+    "##.........L...........#"
+    "##.....................#"
+    "##.........ee..........#"
+    "##...E............E....#"
+    "##.....................#"
+    "####.###################"
+    "####/###################"
+    "##.....##.......########"
+    "##..P..##..B..A.########"
+    "##.....##.......########"
+    "##....../.......##.....#"
+    "##.....##..V....##.....#"
+    "##.....##..e....##.....#"
+    "##.....##...C...##.....#"
+    "##.....##.......##.....#"
+    "#######.##/#####.#######"
     "########################";
 
 void flevel_init(void)
@@ -113,7 +115,7 @@ void flevel_spawn_entities_from_grid(const char *grid, const char *mapName)
         // Map should be generated at +Z (Blender -Y).
         Vec4 pos;
         pos.x = FX_FROM_INT(col * 2);
-        pos.y = FX_ONE; // Ground level for sprites
+        pos.y = (FX_HALF * 3 / 2); // Ground level for sprites
         pos.z = FX_FROM_INT(row * 2);
         pos.w = FX_ONE;
 
@@ -128,6 +130,7 @@ void flevel_spawn_entities_from_grid(const char *grid, const char *mapName)
             fentity_spawn(ENT_TYPE_ENFORCER_F, pos);
             break;
         case 'm':
+        case 'e':
             // Spawn Male Enforcer
             fentity_spawn(ENT_TYPE_ENFORCER_M, pos);
             break;
@@ -143,12 +146,33 @@ void flevel_spawn_entities_from_grid(const char *grid, const char *mapName)
             // L is Forced Labourer in Generator, but physical ledger in Ration Block
             if (mapName && strstr(mapName, "GENERATOR"))
             {
-                // Spawn Boxer (Forced Labourer)
                 fentity_spawn(ENT_TYPE_BOXER, pos);
             }
+            else
+            {
+                fentity_spawn(ENT_TYPE_LEDGER, pos);
+            }
+            break;
+        case 'W':
+            fentity_spawn(ENT_TYPE_WORKER, pos);
+            break;
+        case 'C':
+            fentity_spawn(ENT_TYPE_TERMINAL, pos);
             break;
         case 'V':
+        {
+            pos.y = 0;
             fentity_spawn(ENT_TYPE_VAN, pos);
+            break;
+        }
+        case '^':
+        case '*':
+        case 't':
+            fentity_spawn(ENT_TYPE_EXTRACTION, pos);
+            break;
+        case 'r':
+            fentity_spawn(ENT_TYPE_RATHOLE, pos);
+            fentity_spawn(ENT_TYPE_EXTRACTION, pos);
             break;
         case '/':
         case '$':
@@ -163,20 +187,32 @@ void flevel_spawn_entities_from_grid(const char *grid, const char *mapName)
                 // grid is 24x24 (1d array)
                 int left_idx = (row * 24) + (col - 1);
                 int right_idx = (row * 24) + (col + 1);
-                int is_horizontal_wall = 0;
+                int up_idx = ((row - 1) * 24) + col;
+                int down_idx = ((row + 1) * 24) + col;
 
-                if (col > 0 && col < 23)
-                {
-                    if (grid[left_idx] == '#' || grid[right_idx] == '#')
-                        is_horizontal_wall = 1;
-                }
+                int has_h_wall = 0;
+                int has_v_wall = 0;
 
-                // If horizontal wall, the passage goes Z (up/down). Door spans X.
-                // Since door mesh is on X axis, rotation is 0.
-                // If vertical wall, passage goes X (left/right). Door spans Z.
-                if (!is_horizontal_wall)
+                if (col > 0 && (grid[left_idx] == '#' || grid[left_idx] == '~' || grid[left_idx] == '%' || grid[left_idx] == ':'))
+                    has_h_wall = 1;
+                if (col < 23 && (grid[right_idx] == '#' || grid[right_idx] == '~' || grid[right_idx] == '%' || grid[right_idx] == ':'))
+                    has_h_wall = 1;
+
+                if (row > 0 && (grid[up_idx] == '#' || grid[up_idx] == '~' || grid[up_idx] == '%' || grid[up_idx] == ':'))
+                    has_v_wall = 1;
+                if (row < 23 && (grid[down_idx] == '#' || grid[down_idx] == '~' || grid[down_idx] == '%' || grid[down_idx] == ':'))
+                    has_v_wall = 1;
+
+                // If wall is vertical (North-South, wall above/below and not left/right),
+                // passage goes East-West, so door must span along Z (rot.y = pi/2).
+                // Otherwise wall is horizontal (East-West), passage goes North-South, door spans along X (rot.y = 0).
+                if (has_v_wall && !has_h_wall)
                 {
                     door->rot.y = FX_FROM_FLOAT(1.570796f); // pi/2
+                }
+                else
+                {
+                    door->rot.y = 0;
                 }
             }
             break;
@@ -184,26 +220,24 @@ void flevel_spawn_entities_from_grid(const char *grid, const char *mapName)
         case 'M':
             fentity_spawn(ENT_TYPE_MEDKIT, pos);
             break;
+        case 'A':
+            pos.y = FX_FROM_FLOAT(0.25f);
+            fentity_spawn(ENT_TYPE_AMMO, pos);
+            break;
         case 'F':
             fentity_spawn(ENT_TYPE_FACE, pos);
             break;
         case 'S':
         case 'G':
         case '!':
-        case '*':
         case 'X':
         case 'I':
         case 'O':
-        case 'C':
         case 'H':
         case 'N':
-        case 'e':
-        case 't':
-        case 'r':
-        case 'W':
         case 'Q':
         case '+':
-            // Other entities/triggers
+            // Other static scenery markers/triggers
             break;
         default:
             break;
@@ -231,6 +265,7 @@ void flevel_load(const char *mapName)
     // Despawn old entities and spawn new ones from the map file
     engine_despawn_entities();
     engine_spawn_world_entities();
+    fentity_clear();
 
     // Now spawn entities from our ascii grid definitions
     if (strstr(mapName, "BARRACKS") || strstr(mapName, "HUB"))
@@ -241,14 +276,74 @@ void flevel_load(const char *mapName)
             return;
         }
         flevel_spawn_entities_from_grid(MAP_BARRACKS, mapName);
+        if (g_mission_progress >= 2)
+        {
+            level_swap_wall_texture("ASSTS\\MESH\\BARRACKS\\TEXTURES\\Mat_Wall_Commandment_B.RAW");
+        }
     }
     else if (strstr(mapName, "RATION") || strstr(mapName, "MAP01") || strstr(mapName, "BLOCK"))
     {
+        if (!fai_init_map(MAP_RATIONBLOCK))
+        {
+            console_log("Error initializing Astar grid for RATION");
+            return;
+        }
         flevel_spawn_entities_from_grid(MAP_RATIONBLOCK, mapName);
     }
     else if (strstr(mapName, "GENERATOR") || strstr(mapName, "MAP02"))
     {
+        if (!fai_init_map(MAP_GENERATOR))
+        {
+            console_log("Error initializing Astar grid for GENERATOR");
+            return;
+        }
         flevel_spawn_entities_from_grid(MAP_GENERATOR, mapName);
+    }
+
+    // Spawn ceiling light props at all point light positions
+    for (int i = 0; i < g_world.num_pointLights; i++)
+    {
+        Vec4 light_pos = g_world.pointLights[i].position;
+        light_pos.y = FX_FROM_FLOAT(2.0f) - FX_FROM_FLOAT(0.375f);
+        light_pos.w = FX_ONE;
+        fentity_spawn(ENT_TYPE_LIGHT, light_pos);
+    }
+}
+
+void level_swap_wall_texture(const char *tex_path)
+{
+    if (g_world.num_meshes > 0)
+    {
+        MeshCMS *mesh = &g_world.meshes[0].mesh;
+        // Specifically swap the Civic Record / Commandment wall slots (indices 9 and 10)
+        int target_slots[] = {9, 10};
+        for (int s = 0; s < 2; s++)
+        {
+            int i = target_slots[s];
+            if (i < mesh->texture_count && mesh->textures[i])
+            {
+                u32 tw = mesh->texture_w[i];
+                u32 th = (tw == 128) ? 64 : ((tw == 64) ? 64 : 128);
+                load_raw8(tex_path, mesh->textures[i], tw, th);
+            }
+        }
+        audio_play_sfx(SFX_WALL_SWAP);
+    }
+}
+
+void level_swap_wall_ending(int ending_id)
+{
+    if (ending_id == 1)
+    {
+        level_swap_wall_texture("ASSTS\\MESH\\BARRACKS\\TEXTURES\\Mat_Wall_Standard.RAW");
+    }
+    else if (ending_id == 2)
+    {
+        level_swap_wall_texture("ASSTS\\MESH\\BARRACKS\\TEXTURES\\Mat_Wall_Civic_Record.RAW");
+    }
+    else if (ending_id == 3)
+    {
+        level_swap_wall_texture("ASSTS\\MESH\\BARRACKS\\TEXTURES\\Mat_Wall_Face.RAW");
     }
 }
 
@@ -284,9 +379,6 @@ int flevel_is_in_warm_light(Vec4 position)
 
 void flevel_update(void)
 {
-    // Level specific update logic (e.g., hot-swapping wall textures based on Loyalty/Doubt)
-    // Managed externally via game state transitions, calling level_swap_wall_texture
-    // TODO: Manage WARM vs COLD lighting logic based on spatial zones
 }
 
 void flevel_draw(Camera *cam, Surface8 *surf, const ClipRect *clip_rect)

@@ -18,9 +18,12 @@ typedef struct FPlayer_s
 } FPlayer;
 
 extern FPlayer g_player;
+extern i32 g_mouse_sensitivity;
 
 void fplayer_init(void);
 void fplayer_set_start_pos(Vec4 pos);
+void fplayer_set_start_pos_rot(Vec4 pos, i32 yaw, i32 pitch);
+void fplayer_sync_camera(Camera *cam);
 void fplayer_update(Camera *cam);
 
 #endif

@@ -32,9 +32,7 @@ static BlastConfig g_blast_cfg = {
 #include "src/fentity.h"
 #include "src/fui.h"
 #include "src/faudio.h"
-
-static PCM8UFile m_menu, m_01, m_02, m_03, m_04, m_05, m_06, m_over, m_win;
-static int menuplayed = 0, m_01played = 0, m_02played = 0, m_03played = 0, m_04played = 0, m_05played = 0, m_06played = 0, gameoverplayed = 0, winplayed = 0;
+#include "src/fsave.h"
 
 /* Sprites */
 Sprite sun_spr, moon_spr;
@@ -53,12 +51,12 @@ int main(int argc, char **argv)
     platfrm_chdir_project_root();
 #endif
 
-    init_console("THE TALLY - V0.1a Console Init");
+    init_console("COUNTED [TRUST NO ONE] Console Init");
 
     {
         EngCfg cfg;
         memset(&cfg, 0, sizeof(cfg));
-        cfg.title = "THE TALLY";
+        cfg.title = "COUNTED [TRUST NO ONE]";
         cfg.pal_path = "ASSTS\\PAL\\TALLY.PAL";
         cfg.mouse_mode = CV_MOUSE_MODE_CURSOR;
         cfg.blast_cfg = &g_blast_cfg;
@@ -82,10 +80,6 @@ int main(int argc, char **argv)
             goto QUIT;
         }
         sky_init(&sun_spr, &moon_spr);
-
-        console_log("Audio systems init.");
-        blast_init(&g_blast_cfg);
-        smix_init(22050);
     }
 
     memset(&cam, 0, sizeof(cam));
@@ -102,15 +96,12 @@ int main(int argc, char **argv)
         fgame_init();
     }
     cv_io_keyboard_init();
-    cv_io_mouse_init(SCREEN_W, SCREEN_H, CV_MOUSE_MODE_MOUSELOOK);
+    cv_io_mouse_init(SCREEN_W, SCREEN_H, CV_MOUSE_MODE_CURSOR);
 
     while (!loopdone)
     {
-
         engine_update(&cam);
 
-        cv_io_keyboard_poll();
-        cv_io_mouse_poll();
         fgame_update();
         if (g_state == STATE_PLAYING)
         {
@@ -121,17 +112,17 @@ int main(int argc, char **argv)
         ui_update();
         audio_update();
 
-        smix_update(&cam);
-        if (cv_io_key_down(KEY_ESC))
+        if (g_state == STATE_QUIT)
         {
-
             loopdone = 1;
         }
 
         vga_clear_page(0, 0, SCREEN_SIZE);
         vga_clear_depth();
 
-        if (g_state == STATE_PLAYING)
+        if (g_state == STATE_PLAYING || g_state == STATE_MENU ||
+            (g_state == STATE_SETTINGS && (g_previous_state == STATE_MENU || g_previous_state == STATE_PLAYING)) ||
+            (g_state == STATE_HELP && (g_previous_state == STATE_MENU || g_previous_state == STATE_PLAYING)))
         {
             flevel_draw(&cam, &surf, &screen_rect);
             fentity_draw(&cam, &surf, &screen_rect);
@@ -154,3 +145,5 @@ QUIT:
 #include "src/fentity.c"
 #include "src/fui.c"
 #include "src/faudio.c"
+#include "src/fsave.c"
+

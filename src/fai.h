@@ -32,5 +32,6 @@ int fai_init_map(const u8 *level_string);
 void fai_update_map(const char *grid);
 Node *fai_find_path(int start_x, int start_y, int end_x, int end_y);
 void fai_set_obstacle(int x, int y, int is_obstacle);
+int fai_has_world_los(const Vec4 *from, const Vec4 *to);
 
 #endif // FAI_H

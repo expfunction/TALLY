@@ -5,12 +5,15 @@
 
 typedef enum
 {
+    STATE_SPLASH,
     STATE_TITLE,
     STATE_MENU,
     STATE_PLAYING,
     STATE_GAMEOVER,
     STATE_WIN,
-    STATE_HELP
+    STATE_HELP,
+    STATE_SETTINGS,
+    STATE_QUIT
 } GameState;
 
 typedef enum
@@ -21,6 +24,7 @@ typedef enum
 } LevelID;
 
 extern GameState g_state;
+extern GameState g_previous_state;
 extern LevelID g_current_level;
 
 // 1st Gen Compatibility
@@ -39,7 +43,10 @@ extern int g_ending;
 extern int g_mission_progress;
 
 void fgame_init(void);
+void fgame_start_game(void);
+void fgame_continue_game(void);
 void fgame_load_level(LevelID level);
 void fgame_update(void);
 
 #endif
+

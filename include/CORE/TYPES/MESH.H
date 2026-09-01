@@ -5,7 +5,7 @@
 
 #include "MATH.H"
 
-#define MAX_MESH_TEXTURES 16
+#define MAX_MESH_TEXTURES 32
 #define MAX_CAN_FILES 8
 
 /* Forward declaration — full definition in MESH/CAN.H */

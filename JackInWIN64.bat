@@ -15,6 +15,16 @@ set SCRIPT_DIR=%~dp0
 if not exist "%SCRIPT_DIR%BIN" mkdir "%SCRIPT_DIR%BIN"
 
 if /I not "%VSCMD_ARG_TGT_ARCH%"=="x64" (
+    if exist "%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe" (
+        for /f "usebackq tokens=*" %%i in (`"%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath`) do (
+            if exist "%%i\VC\Auxiliary\Build\vcvars64.bat" (
+                call "%%i\VC\Auxiliary\Build\vcvars64.bat"
+            )
+        )
+    )
+)
+
+if /I not "%VSCMD_ARG_TGT_ARCH%"=="x64" (
     echo [!] ERROR: Incorrect build environment!
     echo Please run this script from the "x64 Native Tools Command Prompt for VS 2022".
     echo The standard Developer Command Prompt defaults to x86, which causes linker conflicts.
